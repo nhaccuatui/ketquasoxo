@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Quản trị – Xổ Số Đức Anh</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#d70f28;--ink:#1f2328;--mute:#5b6068;--g1:#f4f5f7;--g2:#eceef1;--g3:#dfe2e6;--line:#d5d8dd;--green:#1f9d4d;--ui:Arial,Helvetica,sans-serif}
+body{font-family:var(--ui);background:var(--g1);color:var(--ink);min-height:100vh;line-height:1.5}
+header{background:var(--red);color:#fff;padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
+header h1{font:800 21px var(--ui)}
+header a,header button{color:#fff;font-weight:700;background:rgba(255,255,255,.16);border:0;border-radius:8px;padding:9px 14px;text-decoration:none;cursor:pointer;font-size:14px}
+.wrap{max-width:1300px;margin:16px auto;padding:0 14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:14px}
+.card h2{font:800 20px var(--ui);color:var(--red);margin-bottom:4px}
+.card h3{font:800 16px var(--ui);margin:16px 0 6px}
+.card p.d{color:var(--mute);font-size:14px;margin-bottom:12px}
+#login{max-width:420px;margin:60px auto}
+input,select,textarea{font:600 15px var(--ui);padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--red);border-color:var(--red)}
+input[type=password],.full{width:100%}
+button{font:700 15px var(--ui);border:0;border-radius:8px;padding:11px 18px;cursor:pointer;background:var(--g2);color:var(--ink)}
+button:hover{background:var(--g3)}
+button.pri{background:var(--red);color:#fff}
+button.ok{background:var(--green);color:#fff}
+button.danger{background:#fbe5e8;color:var(--red)}
+button.on{background:var(--red);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+.err{color:var(--red);font-weight:600;min-height:22px;margin:8px 0}
+.msg{font-weight:600;font-size:14px;color:var(--green)}
+.msg.bad{color:var(--red)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+nav.sec{display:flex;flex-wrap:wrap;gap:6px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:14px;position:sticky;top:0;z-index:5}
+nav.sec button{padding:11px 16px}
+.f{display:grid;grid-template-columns:230px 1fr;gap:10px 16px;align-items:center;margin-bottom:10px}
+.f label{font-weight:700;font-size:14px}
+.f small{grid-column:2;color:var(--mute);font-size:12.5px;margin-top:-6px}
+@media(max-width:700px){.f{grid-template-columns:1fr}.f small{grid-column:1}}
+.row{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:10px}
+.row label{font-weight:600;font-size:14px;display:flex;gap:8px;align-items:center}
+.row input[type=number]{width:96px}
+/* Nhập số */
+#status{margin-left:auto;font-weight:600;font-size:14px;color:var(--green)}
+#status.bad{color:var(--red)}
+table.g{border-collapse:separate;border-spacing:0;width:100%}
+.g th,.g td{padding:8px 10px;border-bottom:1px solid var(--g3);text-align:center;vertical-align:middle}
+.g thead th{background:var(--g1);position:sticky;top:0}
+.g .pl{background:var(--g1);text-align:left;font-weight:700;white-space:nowrap}
+.g .pl small{display:block;font-weight:500;color:var(--mute);font-size:12px}
+input.n{font:700 24px var(--ui);letter-spacing:2px;text-align:center;width:132px;padding:9px 6px;margin:3px;border:2px solid var(--line);border-radius:10px;font-variant-numeric:tabular-nums}
+input.n.s{width:74px}
+input.n.kh{width:92px;text-transform:uppercase}
+input.n.filled{background:#eefcf4;border-color:#9ee3bd}
+input.n.short{background:#fff4e5;border-color:#ff9f43}
+input.n::placeholder{color:#c9ccd2;font-weight:500}
+input.pn{font:800 18px var(--ui);text-align:center;width:100%;border:2px solid transparent;border-radius:8px;padding:6px;background:transparent}
+input.pn:hover,input.pn:focus{border-color:var(--line);background:#fff}
+input.pc{font:500 13px var(--ui);text-align:center;width:100%;border:0;background:transparent;color:var(--mute);padding:2px}
+.x h3{font:800 17px var(--ui);margin:14px 0 6px}
+.hint{font-size:13.5px;color:var(--mute);line-height:1.6}
+/* Nhạc */
+.mlist{list-style:none;display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.mlist li{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid var(--g3);border-radius:8px;padding:8px 10px;background:var(--g1)}
+.mlist .no{width:28px;height:28px;border-radius:6px;background:var(--red);color:#fff;font:800 13px/28px var(--ui);text-align:center;flex:none}
+.mlist .k{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:#fff;border:1px solid var(--line);flex:none}
+.mlist input.t{flex:1 1 220px;min-width:0}
+.mlist .u{flex:1 1 100%;font-size:12px;color:var(--mute);word-break:break-all;padding-left:36px}
+.mlist button{padding:8px 12px;font-size:13px}
+.mlist .empty{display:block;color:var(--mute);border-style:dashed;background:#fff}
+/* Dữ liệu */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+.stat{background:var(--g1);border:1px solid var(--g3);border-radius:10px;padding:12px 14px}
+.stat .k{display:block;font-size:13px;color:var(--mute);font-weight:600}
+.stat b{display:block;font:800 22px/1.3 var(--ui)}
+.stat small{color:var(--mute);font-size:12.5px}
+.pbar{height:22px;background:var(--g2);border-radius:999px;overflow:hidden;position:relative}
+.pbar i{display:block;height:100%;width:2%;border-radius:999px;transition:width .5s,background .5s;background:var(--green)}
+.pbar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 12px var(--ui)}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--mute);margin:6px 0 14px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+table.mt{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+.mt th,.mt td{border-bottom:1px solid var(--g3);padding:8px 10px;text-align:left}
+.mt th{background:var(--g1)}
+.box{border:1px solid var(--g3);border-radius:10px;padding:14px;margin-top:14px}
+.box.red{border-color:#f3b7c0;background:#fff7f8}
+.pv{margin-top:10px;padding:14px;border-radius:10px;background:var(--g1);border:1px dashed var(--line);font-size:14px}
+.pv .lg{font:800 26px var(--ui)}.pv .lg .a{color:var(--red)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Quản trị · Xổ Số Đức Anh</h1>
+  <div class="bar">
+    <a href="index.html" target="_blank" rel="noopener">Mở trang xem kết quả ↗</a>
+    <button type="button" id="logout" hidden>Đăng xuất</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section id="login" class="card">
+    <h2>Đăng nhập quản trị</h2>
+    <p class="d">Nhập mật khẩu quản trị.</p>
+    <form id="lf"><input id="pw" type="password" placeholder="Mật khẩu" autocomplete="current-password" required>
+      <div class="err" id="lerr" role="alert"></div><button class="pri" type="submit">Đăng nhập</button></form>
+  </section>
+
+  <div id="app" hidden>
+    <nav class="sec" id="secnav" aria-label="Các mục quản trị">
+      <button type="button" data-sec="nhap">1. Nhập số trực tiếp</button>
+      <button type="button" data-sec="giaodien">2. Giao diện &amp; nội dung</button>
+      <button type="button" data-sec="chuchay">3. Chữ chạy</button>
+      <button type="button" data-sec="nhac">4. Nhạc</button>
+      <button type="button" data-sec="dulieu">5. Dữ liệu &amp; lưu trữ</button>
+      <button type="button" data-sec="matkhau">6. Mật khẩu</button>
+    </nav>
+
+    <!-- 1. Nhập số -->
+    <section data-panel="nhap">
+      <div class="card bar">
+        <label>Ngày <input id="date" type="date"></label>
+        <div id="rtabs" class="bar"></div>
+        <a id="src-link" href="#" target="_blank" rel="noopener" hidden style="font-weight:700;color:#d70f28">Mở nguồn tham khảo ↗</a>
+        <span id="status" role="status"></span>
+      </div>
+      <div class="card" style="overflow:auto"><div id="grid"></div></div>
+      <p class="hint">
+        Gõ đủ số của ô là tự nhảy sang ô tiếp theo; mỗi lần nhập, số được gửi lên trang xem ngay (khoảng 4 giây là hiện).
+        Ô <b style="color:#c56a00">màu cam</b> là ô gõ chưa đủ chữ số, kiểm tra lại trước khi chuyển giải. Xóa số trong ô để xóa trên trang.
+        Tên đài/mã kỳ quay ở đầu cột sửa được nếu đài hôm nay khác lịch.
+      </p>
+    </section>
+
+    <!-- 2. Giao diện -->
+    <section data-panel="giaodien" hidden>
+      <div class="card">
+        <h2>Giao diện &amp; nội dung</h2>
+        <p class="d">Sửa chữ rồi bấm <b>Lưu nội dung</b>. Trang xem tự đổi sau khoảng 15 giây, không cần tải lại.</p>
+        <form id="sf">
+          <div class="f"><label for="s-siteName">Tên trang (logo)</label><input class="full" id="s-siteName" maxlength="60"><small>2 chữ đầu màu đỏ, phần sau màu đen. Ví dụ: Xổ Số Đức Anh</small></div>
+          <div class="f"><label for="s-slogan">Dòng nhỏ dưới tên trang</label><input class="full" id="s-slogan" maxlength="80"></div>
+          <div class="f"><label for="s-leftText">Nội dung bên trái (chữ dọc)</label><input class="full" id="s-leftText" maxlength="80"></div>
+          <div class="f"><label for="s-rightText">Nội dung bên phải (chữ dọc)</label><input class="full" id="s-rightText" maxlength="80"></div>
+          <div class="f"><label for="s-line1">Nội dung dòng 1 (tiêu đề trên cùng)</label><input class="full" id="s-line1" maxlength="160"></div>
+          <div class="f"><label for="s-line2">Nội dung dòng 2</label><input class="full" id="s-line2" maxlength="200"></div>
+          <div class="f"><label for="s-wmText">Chữ watermark (chữ mờ nền)</label><input class="full" id="s-wmText" maxlength="40"><small>Để trống để tắt watermark.</small></div>
+          <div class="f"><label for="s-wmOpacity">Độ đậm watermark</label><div class="bar"><input id="s-wmOpacity" type="range" min="0" max="0.5" step="0.01" style="flex:1"><b id="s-wmv">0.45</b></div></div>
+          <div class="f"><label for="s-footer1">Chân trang – dòng 1</label><input class="full" id="s-footer1" maxlength="300"></div>
+          <div class="f"><label for="s-footer2">Chân trang – dòng 2</label><input class="full" id="s-footer2" maxlength="300"></div>
+          <div class="pv" id="s-pv"></div>
+          <div class="bar" style="margin-top:14px">
+            <button class="pri" type="submit">Lưu nội dung</button>
+            <button type="button" id="s-reset">Đưa về chữ mặc định</button>
+            <span class="msg" id="s-msg" role="status"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. Chữ chạy -->
+    <section data-panel="chuchay" hidden>
+      <div class="card">
+        <h2>Dòng chữ chạy ngang màn hình</h2>
+        <p class="d">Chữ chạy ngang qua khung kết quả ở mọi tab và trên <b>mọi máy đang xem</b> (kể cả cửa sổ livestream OBS).</p>
+        <form id="tf">
+          <div class="f"><label for="t-text">Nội dung</label><input class="full" id="t-text" maxlength="300" placeholder="Ví dụ: Bạn đang xem livestream trực tiếp từ YouTube Đức Anh"></div>
+          <div class="row">
+            <label>Chạy 1 lần mỗi <input id="t-every" type="number" min="0" max="3600" value="60"> giây</label>
+            <label>Tốc độ: <input id="t-sec" type="number" min="5" max="120" value="20"> giây chạy hết màn hình</label>
+            <label>Vị trí <select id="t-pos"><option value="mid">Giữa khung</option><option value="top">Trên cùng</option><option value="bot">Dưới cùng</option></select></label>
+          </div>
+          <p class="hint">Số giây nhỏ = chạy nhanh. Đặt "mỗi 0 giây" để chỉ chạy 1 lần.</p>
+          <div class="bar" style="margin-top:12px">
+            <button class="pri" type="submit">Lưu &amp; chạy ngay</button>
+            <button type="button" id="t-off">Tắt chữ chạy</button>
+            <span class="msg" id="t-msg" role="status"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 4. Nhạc -->
+    <section data-panel="nhac" hidden>
+      <div class="card">
+        <h2>Nhạc</h2>
+        <p class="d">Chỉ thêm nhạc ở đây. Trang chủ chỉ có nút nghe, người xem không thêm/xóa được. Trang chủ mỗi lúc chỉ phát một nguồn (mp3 hoặc YouTube).</p>
+        <h3>Thêm bằng link</h3>
+        <form id="mf" class="bar">
+          <input id="m-url" type="url" style="flex:2 1 320px" placeholder="Link YouTube (video / danh sách phát) hoặc link file .mp3" required>
+          <input id="m-title" style="flex:1 1 200px" placeholder="Tên bài (không bắt buộc)" maxlength="120">
+          <button class="pri" type="submit">Thêm</button>
+        </form>
+        <h3>Tải file mp3 từ máy lên</h3>
+        <div class="bar">
+          <input id="m-file" type="file" accept="audio/*,.mp3" multiple>
+          <button type="button" id="m-up" class="pri">Tải lên</button>
+          <span class="msg" id="m-upmsg" role="status"></span>
+        </div>
+        <p class="hint">Cần kết nối Vercel Blob (bạn đã có). Mỗi file tối đa 50 MB. Nên dùng nhạc miễn phí bản quyền khi livestream (YouTube Audio Library, Pixabay Music...).</p>
+        <h3>Danh sách nhạc</h3>
+        <ol class="mlist" id="m-list"></ol>
+        <span class="msg" id="m-msg" role="status"></span>
+      </div>
+    </section>
+
+    <!-- 5. Dữ liệu -->
+    <section data-panel="dulieu" hidden>
+      <div class="card">
+        <h2>Dữ liệu &amp; lưu trữ</h2>
+        <p class="d">Dữ liệu lưu trên Vercel (Upstash Redis) và sao lưu lên GitHub mỗi ngày. <b>Không có xóa tự động</b>; chỉ xóa khi bạn bấm nút xóa tháng bên dưới.</p>
+        <div class="stats">
+          <div class="stat"><span class="k">Số ngày đã lưu</span><b id="st-days">--</b><small id="st-range"></small></div>
+          <div class="stat"><span class="k">Dung lượng đã dùng</span><b id="st-size">--</b><small id="st-limit"></small></div>
+          <div class="stat"><span class="k">Sao lưu GitHub gần nhất</span><b id="st-bk" style="font-size:16px">--</b><small id="st-bk2"></small></div>
+        </div>
+        <div class="pbar" aria-hidden="true"><i id="st-bar"></i><span id="st-pct"></span></div>
+        <div class="legend"><span><i style="background:#1f9d4d"></i>Dưới 60%: thoải mái</span><span><i style="background:#ff9f43"></i>60–85%: nên xóa bớt tháng cũ</span><span><i style="background:#d70f28"></i>Trên 85%: sắp đầy</span></div>
+        <div class="bar"><button type="button" id="st-refresh">Làm mới</button><span class="msg" id="st-msg" role="status"></span></div>
+
+        <h3>Theo từng tháng</h3>
+        <table class="mt"><thead><tr><th>Tháng</th><th>Số ngày</th><th>Dung lượng</th></tr></thead><tbody id="st-months"></tbody></table>
+
+        <div class="box">
+          <h3 style="margin-top:0">Sao lưu lên GitHub</h3>
+          <p class="hint" id="bk-info">Tự động mỗi ngày lúc 20:00–21:00 giờ Việt Nam vào thư mục <b>data/</b> của repo.</p>
+          <div class="bar" style="margin-top:8px">
+            <button type="button" class="ok" id="bk-now">Sao lưu ngay</button>
+            <button type="button" id="bk-month">Sao lưu cả tháng đang chọn bên dưới</button>
+            <span class="msg" id="bk-msg" role="status"></span>
+          </div>
+        </div>
+
+        <div class="box red">
+          <h3 style="margin-top:0">Xóa dữ liệu của 1 tháng</h3>
+          <div class="row">
+            <label>Năm <select id="cl-y"></select></label>
+            <label>Tháng <select id="cl-m"></select></label>
+            <label>Gõ lại <b id="cl-hint">MM/YYYY</b> để xác nhận <input id="cl-confirm" style="width:120px" placeholder="MM/YYYY" autocomplete="off"></label>
+          </div>
+          <label class="row" style="font-weight:600;font-size:14px;gap:8px"><input type="checkbox" id="cl-gh" checked> Xóa luôn bản sao lưu của tháng này trên GitHub</label>
+          <div class="bar"><button type="button" class="danger" id="cl-go">Xóa dữ liệu tháng</button><span class="msg" id="cl-msg" role="status"></span></div>
+          <p class="hint" style="margin-top:8px">Xóa rồi không lấy lại được (trừ khi bỏ chọn ô xóa GitHub ở trên).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Mật khẩu -->
+    <section data-panel="matkhau" hidden>
+      <div class="card" style="max-width:520px">
+        <h2>Đổi mật khẩu quản trị</h2>
+        <p class="d">Mật khẩu được lưu ở dạng mã hóa, không ai đọc được chữ thật.</p>
+        <form id="pf">
+          <div class="f" style="grid-template-columns:1fr"><label for="p-cur">Mật khẩu hiện tại</label><input id="p-cur" type="password" autocomplete="current-password" required></div>
+          <div class="f" style="grid-template-columns:1fr"><label for="p-new">Mật khẩu mới (ít nhất 6 ký tự)</label><input id="p-new" type="password" autocomplete="new-password" minlength="6" required></div>
+          <div class="f" style="grid-template-columns:1fr"><label for="p-new2">Gõ lại mật khẩu mới</label><input id="p-new2" type="password" autocomplete="new-password" minlength="6" required></div>
+          <div class="bar"><button class="pri" type="submit">Đổi mật khẩu</button><span class="msg" id="p-msg" role="status"></span></div>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="schedule.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

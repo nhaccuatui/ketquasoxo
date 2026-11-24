@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-09",
+  "nam": {
+    "provinces": [
+      { "name": "TP. HCM", "code": "11B2", "prizes": { "g8": ["03"] } },
+      { "name": "Đồng Tháp", "code": "V45", "prizes": { "g8": ["38"], "g7": ["021"], "g6": ["4588", "5252", "8147"] } },
+      { "name": "Cà Mau", "code": "26-T11K2", "prizes": { "g8": ["77"], "g7": ["653"], "g6": ["9688", "8292", "8147"] } }
+    ]
+  },
+  "trung": {
+    "provinces": [
+      { "name": "Thừa T. Huế", "code": "XSTTH", "prizes": {} },
+      { "name": "Phú Yên", "code": "XSPY", "prizes": {} }
+    ]
+  },
+  "bac": {
+    "provinces": [
+      { "name": "Hà Nội", "prizes": {} }
+    ],
+    "kyhieu": []
+  },
+  "dt123": [],
+  "thantai": []
+}
