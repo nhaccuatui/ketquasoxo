@@ -31,13 +31,15 @@ window.KQXS_CONFIG = {
   rolloverHour: 14,   // trước 14:00 hiện kết quả hôm trước, từ 14:00 chờ kết quả hôm nay
   drawTime: { nam: '16:15', trung: '17:15', bac: '18:15' },
 
-  // Nguồn tham khảo để đối chiếu khi nhập số. KHÔNG hiện ở trang chủ, chỉ có nút mở trong trang admin (mục 1).
-  sourceUrl: 'https://xsmn.mobi/xo-so-truc-tiep.html',
-  sourceLabel: 'xsmn.mobi',
+  // Nút "Mở nguồn tham khảo" trong admin: để '' là ẩn (theo yêu cầu, đã bỏ xsmn.mobi)
+  sourceUrl: '',
+  sourceLabel: '',
 
-  // Khung nhúng nguồn ngoài thành 1 tab ở trang chủ. Để '' để ẩn (mặc định ẩn).
-  embedUrl: '',
-  embedLabel: '',
+  // Tab "Trực tiếp Minh Ngọc" ở trang chủ: nhúng khung kết quả trực tiếp của Minh Ngọc
+  // theo cách Minh Ngọc cho phép (thêm /free sau tên miền, chỉ chạy khi nhúng).
+  // Nếu khung trống, đổi thành 'https://www.minhngoc.net.vn/free/index.php'. Để '' để ẩn tab.
+  embedUrl: 'https://www.minhngoc.net.vn/free/xo-so-truc-tiep.html',
+  embedLabel: 'Trực tiếp Minh Ngọc',
 
   /* ----- Nhạc nền -----
      Nhạc chỉ thêm trong trang admin (mục 4. Nhạc). File 1.mp3 … 20.mp3 trong thư mục music/ vẫn được phát nếu có. */
