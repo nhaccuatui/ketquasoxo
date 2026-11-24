@@ -1,5 +1,4 @@
 {
-  "ignoreCommand": "if git rev-parse --verify -q HEAD^ >/dev/null && git diff --quiet HEAD^ HEAD -- . ':(exclude)data'; then exit 0; else exit 1; fi",
   "crons": [
     { "path": "/api/backup", "schedule": "0 13 * * *" }
   ],
