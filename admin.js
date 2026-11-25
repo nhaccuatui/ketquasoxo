@@ -559,6 +559,12 @@
       .then(function () { $('#src-try').disabled = $('#src-apply').disabled = false; });
   }
   $('#src-try').addEventListener('click', function () { trySrc(true); });
+  $('#mn-live').addEventListener('click', function () {
+    var box = $('#mn-box'), on = box.hidden;
+    box.hidden = !on;
+    box.innerHTML = on ? '<iframe src="' + esc(CFG.liveFallbackUrl || 'https://www.minhngoc.net.vn/free/xo-so-truc-tiep.html') + '" style="width:100%;height:100%;border:0" referrerpolicy="no-referrer" title="Trực tiếp Minh Ngọc"></iframe>' : '';
+    $('#mn-live').textContent = on ? 'Đóng khung trực tiếp Minh Ngọc' : 'Mở khung trực tiếp Minh Ngọc';
+  });
   $('#src-apply').addEventListener('click', function () {
     if (!confirm('Lấy số từ nguồn và lưu vào ngày ' + ($('#src-date').value || todayVN()).split('-').reverse().join('/') + '? Ô đã có số sẽ được thay bằng số của nguồn.')) return;
     trySrc(false);

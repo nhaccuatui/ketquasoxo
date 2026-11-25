@@ -1,7 +1,7 @@
 // Lấy kết quả tự động từ nguồn ngoài và chuyển về đúng cấu trúc dữ liệu của trang.
 //  - minhngoc : đọc trang kết quả của Minh Ngọc (minhngoc.net.vn/ket-qua-xo-so/<miền>/<DD-MM-YYYY>.html)
 //  - xosovnm  : API công khai của Xổ Số VN (api.xosovnm.net), không cần key
-import { DATE_RE, K, pipeline, redis, vnToday } from './_lib.js';
+import { DATE_RE, K, ghCommit, ghConf, pipeline, redis, vnToday } from './_lib.js';
 
 export const SOURCES = {
   minhngoc: { label: 'Minh Ngọc (minhngoc.net.vn)', home: 'https://www.minhngoc.net.vn/' },
@@ -239,6 +239,7 @@ export async function syncDay(iso, opts = {}) {
     if (!doc[r].provinces || !doc[r].provinces.length) doc[r].provinces = SCHEDULE[wd][r].map((n) => ({ name: n, code: '', prizes: {} }));
   });
 
+  const doneBefore = REGIONS.filter((r) => regionDone(doc, r));
   const report = {};
   let changed = 0;
   const results = await Promise.all(regions.map(async (r) => {
@@ -261,11 +262,27 @@ export async function syncDay(iso, opts = {}) {
     doc.autoSource = mode;
     const t = JSON.stringify(doc);
     await pipeline([['SET', K.day(iso), t], ['HSET', K.sizes, iso, String(Buffer.byteLength(t))], ['SADD', K.dirty, iso]]);
+    await saveDayIfDone(iso, doc, doneBefore);
   }
   const status = { at: new Date().toISOString(), date: iso, mode, changed, report };
   if (!opts.dry && (changed || Object.values(report).some((x) => !x.ok))) { try { await redis('SET', K.srcStat, JSON.stringify(status)); } catch { } }
   return { ok: true, doc, ...status };
 }
+
+/* ---------------- Tự lưu vào thư mục data/ trên GitHub khi một miền vừa quay xong ---------------- */
+export async function saveDayIfDone(iso, doc, doneBefore) {
+  try {
+    const now = REGIONS.filter((r) => regionDone(doc, r));
+    const fresh = now.filter((r) => !(doneBefore || []).includes(r));
+    if (!fresh.length || !ghConf()) return false;
+    const names = { nam: 'Miền Nam', trung: 'Miền Trung', bac: 'Miền Bắc' };
+    await ghCommit([{ path: 'data/' + iso + '.json', content: JSON.stringify(doc, null, 1) + '\n' }],
+      'Lưu kết quả ' + fresh.map((r) => names[r]).join(', ') + ' ngày ' + dmy(iso));
+    if (now.length === REGIONS.length) await redis('SREM', K.dirty, iso);
+    return true;
+  } catch { return false; }
+}
+export { regionDone };
 
 /* ---------------- Tự lấy khi có người đang xem (gọi từ /api/results) ---------------- */
 function vnClock() {

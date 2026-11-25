@@ -37,8 +37,8 @@ window.KQXS_CONFIG = {
   // Tab "Trực tiếp Minh Ngọc" ở trang chủ: nhúng khung kết quả trực tiếp của Minh Ngọc
   // theo cách Minh Ngọc cho phép (thêm /free sau tên miền, chỉ chạy khi nhúng).
   // Nếu khung trống, đổi thành 'https://www.minhngoc.net.vn/free/index.php'. Để '' để ẩn tab.
-  embedUrl: 'https://www.minhngoc.net.vn/free/xo-so-truc-tiep.html',
-  embedLabel: 'Trực tiếp Minh Ngọc',
+  embedUrl: '',      // đã bỏ tab "Trực tiếp Minh Ngọc" khỏi trang chủ (xem trong admin, mục 7)
+  embedLabel: '',
 
   // Đang giờ quay mà trang không lấy được số (quá 2,5 phút chưa có số nào, hoặc mất kết nối máy chủ)
   // thì tự hiện khung trực tiếp của Minh Ngọc ngay trong bảng. Có số lại thì tự quay về bảng của trang. Để '' để tắt.

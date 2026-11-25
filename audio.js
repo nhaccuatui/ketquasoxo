@@ -245,7 +245,7 @@
   var PNAME = { g8: 'giải tám', g7: 'giải bảy', g6: 'giải sáu', g5: 'giải năm', g4: 'giải tư', g3: 'giải ba', g2: 'giải nhì', g1: 'giải nhất', db: 'giải đặc biệt' };
   var NT_ORDER = ['g8', 'g7', 'g6', 'g5', 'g4', 'g3', 'g2', 'g1', 'db'];
   var ORDER = { nam: NT_ORDER, trung: NT_ORDER, bac: ['g7', 'g6', 'g5', 'g4', 'g3', 'g2', 'g1', 'db'] };
-  var voiceOn = params.has('voice') ? params.get('voice') === '1' : lsGet('kqxs_voice') === '1';
+  var voiceOn = params.has('voice') ? params.get('voice') === '1' : lsGet('kqxs_voice') !== '0'; // mặc định BẬT
   var viVoice = null, pending = 0;
   var hasTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
 

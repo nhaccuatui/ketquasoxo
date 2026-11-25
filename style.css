@@ -604,4 +604,9 @@ body.prep-nam .tbl.nam .wait,body.prep-trung .tbl.trung .wait,body.prep-bac .tbl
 .cd-sub .ct.nam{color:#000}.cd-sub .ct.trung{color:#018535}.cd-sub .ct.bac{color:#1662f1}
 
 /* v17: số đang quay chạy ngẫu nhiên (giống Minh Ngọc) */
-.num.roll{color:#9aa0a8!important;opacity:.85;font-variant-numeric:tabular-nums}
+.num.roll{color:#ff7a00!important;opacity:1;font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(255,170,0,.45)}
+/* v18: xem từng miền – giải tư mỗi số một dòng */
+.nam.m-single .p-g4 .num,.trung.m-single .p-g4 .num{font-size:56px;line-height:1}
+.nam.m-single .p-g8 .num,.nam.m-single .p-g7 .num,.nam.m-single .p-db .num,
+.trung.m-single .p-g8 .num,.trung.m-single .p-g7 .num,.trung.m-single .p-db .num{font-size:118px;line-height:1}
+.nam.m-single .p-g4,.trung.m-single .p-g4{row-gap:0;padding-top:4px;padding-bottom:4px}
