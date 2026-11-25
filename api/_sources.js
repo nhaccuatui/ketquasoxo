@@ -65,36 +65,67 @@ function cellOf(seg, cls) {
   const m = new RegExp('<td[^>]*class="[^"]*\\b' + cls + '\\b[^"]*"[^>]*>([\\s\\S]*?)</td>', 'i').exec(seg);
   return m ? m[1] : null;
 }
+// Tìm đúng hộp kết quả của NGÀY CẦN LẤY trong trang (trang Minh Ngọc có nhiều ngày) – không bao giờ lấy nhầm ngày khác
+function parseMinhNgoc(html, region, iso) {
+  const len = LEN[region];
+  const y2 = iso.slice(2, 4), dd = iso.slice(8, 10), mm = iso.slice(5, 7);
+  const marks = [];
+  const re = new RegExp(dd + '/' + mm + '/(?:' + iso.slice(0, 4) + '|' + y2 + ')(?!\\d)', 'g');
+  let m; while ((m = re.exec(html))) marks.push(m.index);
+  if (!marks.length) return null;
+  const wd = new Date(iso + 'T00:00:00Z').getUTCDay();
+  const want = new Set(SCHEDULE[wd][region].map(slug));
+  for (const p of marks) {
+    const win = html.slice(p, p + 80000);
+    if (region === 'bac') {
+      const at = win.search(/class="[^"]*\bgiaidb\b/i);
+      if (at < 0 || at > 9000) continue;
+      const seg = win.slice(0, at + 6000);
+      const prizes = {};
+      PRIZES.bac.forEach(([id]) => { const c = cellOf(seg, id === 'db' ? 'giaidb' : 'giai' + id.slice(1)); if (c) prizes[id] = nums(c, len[id]); });
+      const kh = /\b(\d{1,2}[A-Z]{1,3}(?:\s*-\s*\d{1,2}[A-Z]{1,3}){2,7})\b/.exec(text(seg));
+      return { provinces: [{ name: '', code: '', prizes }], kyhieu: kh ? kh[1].split(/\s*-\s*/) : [] };
+    }
+    // Miền Nam / Trung: mỗi tỉnh là một bảng con class "rightcl"
+    const first = win.search(/<table[^>]*class="[^"]*\brightcl\b/i);
+    if (first < 0 || first > 9000) continue;
+    const parts = win.slice(first).split(/<table[^>]*class="[^"]*\brightcl\b[^"]*"[^>]*>/i).slice(1);
+    const seen = new Set(), provinces = [];
+    for (const raw of parts) {
+      const seg = raw.split(/<\/table>/i)[0];
+      const name = text(cellOf(seg, 'tinh'));
+      if (!name) continue;
+      const key = slug(name);
+      if (seen.has(key)) break;                 // đã sang hộp của ngày khác
+      if (!want.has(key)) { if (provinces.length) break; else continue; } // tỉnh không mở thưởng ngày này
+      seen.add(key);
+      const prizes = {};
+      PRIZES[region].forEach(([id]) => { const c = cellOf(seg, id === 'db' ? 'giaidb' : 'giai' + id.slice(1)); if (c) prizes[id] = nums(c, len[id]); });
+      provinces.push({ name, code: text(cellOf(seg, 'matinh')).replace(/^.*?:\s*/, ''), prizes });
+    }
+    if (provinces.length) return { provinces };
+  }
+  return null;
+}
+const filledOf = (r) => (r && r.provinces || []).reduce((s, p) => s + Object.values(p.prizes || {}).reduce((t, a) => t + a.length, 0), 0);
 async function minhngoc(region, iso) {
   const d = iso.slice(8, 10) + '-' + iso.slice(5, 7) + '-' + iso.slice(0, 4);
-  const html = await get('https://www.minhngoc.net.vn/ket-qua-xo-so/' + MN_SLUG[region] + '/' + d + '.html');
-  if (html.indexOf(dmy(iso)) < 0) return { provinces: [], note: 'Minh Ngọc chưa có trang của ngày ' + dmy(iso) };
-  const len = LEN[region];
-  if (region === 'bac') {
-    const start = html.search(/class="[^"]*\bgiaidb\b/i);
-    if (start < 0) throw new Error('Không đọc được bảng Miền Bắc của Minh Ngọc (trang đã đổi cấu trúc?)');
-    const seg = html.slice(Math.max(0, start - 3000), start + 6000);
-    const prizes = {};
-    PRIZES.bac.forEach(([id]) => { const c = cellOf(seg, id === 'db' ? 'giaidb' : 'giai' + id.slice(1)); if (c) prizes[id] = nums(c, len[id]); });
-    const kh = /\b(\d{1,2}[A-Z]{1,3}(?:\s*-\s*\d{1,2}[A-Z]{1,3}){2,7})\b/.exec(text(seg));
-    return { provinces: [{ name: '', code: '', prizes }], kyhieu: kh ? kh[1].split(/\s*-\s*/) : [] };
+  const urls = [];
+  // Hôm nay: trang "xổ số trực tiếp" mới có số đang quay; trang theo ngày chỉ có số sau khi quay xong
+  if (iso === vnToday()) urls.push('https://www.minhngoc.net.vn/xo-so-truc-tiep/' + MN_SLUG[region] + '.html');
+  urls.push('https://www.minhngoc.net.vn/ket-qua-xo-so/' + MN_SLUG[region] + '/' + d + '.html');
+  let best = null, lastErr = null, sawPage = false;
+  for (const u of urls) {
+    let html;
+    try { html = await get(u); } catch (e) { lastErr = e; continue; }
+    sawPage = true;
+    const r = parseMinhNgoc(html, region, iso);
+    if (r && filledOf(r) > filledOf(best)) best = r;
+    if (best && filledOf(best) >= PRIZES[region].reduce((s, x) => s + x[1], 0) * best.provinces.length) break; // đã đủ số
   }
-  // Miền Nam / Trung: mỗi tỉnh là một bảng con class "rightcl"
-  const parts = html.split(/<table[^>]*class="[^"]*\brightcl\b[^"]*"[^>]*>/i).slice(1);
-  if (!parts.length) throw new Error('Không đọc được bảng ' + (region === 'nam' ? 'Miền Nam' : 'Miền Trung') + ' của Minh Ngọc (trang đã đổi cấu trúc?)');
-  const seen = new Set(), provinces = [];
-  for (const raw of parts) {
-    const seg = raw.split(/<\/table>/i)[0];
-    const name = text(cellOf(seg, 'tinh'));
-    if (!name) continue;
-    const key = slug(name);
-    if (seen.has(key)) break; // sang bảng của ngày khác
-    seen.add(key);
-    const prizes = {};
-    PRIZES[region].forEach(([id]) => { const c = cellOf(seg, id === 'db' ? 'giaidb' : 'giai' + id.slice(1)); if (c) prizes[id] = nums(c, len[id]); });
-    provinces.push({ name, code: text(cellOf(seg, 'matinh')).replace(/^.*?:\s*/, ''), prizes });
-  }
-  return { provinces };
+  if (best) return best;
+  if (!sawPage && lastErr) throw lastErr;
+  return { provinces: [], note: 'Minh Ngọc chưa có kết quả ngày ' + dmy(iso) };
 }
 
 /* ---------------- Nguồn 2: Xổ Số VN (API JSON) ---------------- */

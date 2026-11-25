@@ -602,3 +602,6 @@ body.prep-nam .tbl.nam .wait,body.prep-trung .tbl.trung .wait,body.prep-bac .tbl
 .cd-sub .cn{font-weight:400;color:#9aa0a8}
 .cd-sub .ct{font-weight:800}
 .cd-sub .ct.nam{color:#000}.cd-sub .ct.trung{color:#018535}.cd-sub .ct.bac{color:#1662f1}
+
+/* v17: số đang quay chạy ngẫu nhiên (giống Minh Ngọc) */
+.num.roll{color:#9aa0a8!important;opacity:.85;font-variant-numeric:tabular-nums}

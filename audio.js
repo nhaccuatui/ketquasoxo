@@ -249,27 +249,68 @@
   var viVoice = null, pending = 0;
   var hasTTS = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
 
+  // Chỉ dùng giọng TIẾNG VIỆT. Ưu tiên giọng tự nhiên của máy (Edge: HoaiMy/NamMinh Online; Chrome: Google tiếng Việt).
+  // Máy không có giọng tiếng Việt thì đọc bằng giọng Google tiếng Việt qua máy chủ của trang (/api/tts).
+  function rankVoice(v) {
+    var n = v.name || '';
+    if (/HoaiMy|NamMinh|Natural|Online/i.test(n)) return 3;
+    if (/Google/i.test(n)) return 2;
+    return v.localService ? 1 : 1.5;
+  }
   function pickVoice() {
-    if (!hasTTS) return;
-    var vs = speechSynthesis.getVoices() || [];
     viVoice = null;
-    for (var i = 0; i < vs.length; i++) if (/^vi([-_]|$)/i.test(vs[i].lang)) { viVoice = vs[i]; break; }
+    if (hasTTS) {
+      var vs = (speechSynthesis.getVoices() || []).filter(function (v) { return /^vi([-_]|$)/i.test(v.lang || ''); });
+      vs.sort(function (a, b) { return rankVoice(b) - rankVoice(a); });
+      viVoice = vs[0] || null;
+    }
     var n = $('#v-note');
     if (!n) return;
-    if (viVoice) n.textContent = 'Giọng: ' + viVoice.name;
-    else n.textContent = 'Máy chưa có giọng tiếng Việt (Windows: Cài đặt → Ngôn ngữ → Tiếng Việt → Chuyển văn bản thành giọng nói).';
+    n.textContent = viVoice ? 'Giọng tiếng Việt: ' + viVoice.name : 'Giọng tiếng Việt: Google (đọc qua máy chủ của trang)';
   }
   if (hasTTS) { pickVoice(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', pickVoice); }
 
+  /* Đọc qua máy chủ (khi máy không có giọng tiếng Việt): xếp hàng từng đoạn mp3 */
+  var ttsQ = [], ttsAudio = new Audio(), ttsBusy = false;
+  ttsAudio.preload = 'auto';
+  function ttsNext() {
+    if (!ttsQ.length) { ttsBusy = false; if (!pending) Music.duck(false); return; }
+    ttsBusy = true; Music.duck(true);
+    ttsAudio.src = 'api/tts?q=' + encodeURIComponent(ttsQ.shift());
+    ttsAudio.volume = VC.volume != null ? VC.volume : 1;
+    ttsAudio.playbackRate = Math.max(0.5, Math.min(1.5, (VC.rate || 0.9) + 0.1));
+    var p = ttsAudio.play(); if (p && p.catch) p.catch(ttsNext);
+  }
+  ttsAudio.addEventListener('ended', ttsNext);
+  ttsAudio.addEventListener('error', ttsNext);
+  function chunks(text) {
+    var out = [], cur = '';
+    String(text).split(/(?<=[,.:;])\s+/).forEach(function (part) {
+      if ((cur + ' ' + part).trim().length > 180) { if (cur) out.push(cur); cur = part; } else cur = (cur + ' ' + part).trim();
+    });
+    if (cur) out.push(cur);
+    return out;
+  }
+  function stopSpeech() {
+    if (hasTTS) speechSynthesis.cancel();
+    ttsQ = []; try { ttsAudio.pause(); } catch (e) { } ttsBusy = false; pending = 0; Music.duck(false);
+  }
+
   function say(text) {
-    if (!hasTTS || !voiceOn) return;
+    if (!voiceOn) return;
+    if (!viVoice) {
+      if (ttsQ.length > 20) ttsQ = [];
+      ttsQ = ttsQ.concat(chunks(text));
+      if (!ttsBusy) ttsNext();
+      return;
+    }
     if (pending > 12) { speechSynthesis.cancel(); pending = 0; Music.duck(false); }
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'vi-VN'; if (viVoice) u.voice = viVoice;
+    u.lang = 'vi-VN'; u.voice = viVoice;
     u.rate = VC.rate || 0.9; u.volume = VC.volume != null ? VC.volume : 1;
     pending++;
     u.onstart = function () { Music.duck(true); };
-    var done = function () { pending = Math.max(0, pending - 1); if (!pending) Music.duck(false); };
+    var done = function () { pending = Math.max(0, pending - 1); if (!pending && !ttsBusy) Music.duck(false); };
     u.onend = done; u.onerror = done;
     speechSynthesis.speak(u);
   }
@@ -326,7 +367,7 @@
     $('#m-vol').addEventListener('input', function (e) { Music.setVol(e.target.value / 100); });
     $('#v-toggle').addEventListener('click', function () {
       unlock(); voiceOn = !voiceOn; lsSet('kqxs_voice', voiceOn ? '1' : '0'); setVoiceBtn();
-      if (voiceOn) say('Đã bật đọc số'); else if (hasTTS) speechSynthesis.cancel();
+      if (voiceOn) say('Đã bật đọc số'); else stopSpeech();
     });
     $('#v-test').addEventListener('click', function () {
       unlock();

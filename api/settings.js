@@ -9,6 +9,10 @@ const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.
 function clean(patch, cur) {
   const out = { ...cur };
   for (const k of Object.keys(TEXT)) if (patch[k] !== undefined) out[k] = str(patch[k], TEXT[k]);
+  if (patch.rollover !== undefined) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(String(patch.rollover).trim());
+    if (m && +m[1] < 24 && +m[2] < 60) out.rollover = m[1].padStart(2, '0') + ':' + m[2];
+  }
   if (patch.wmOpacity !== undefined) out.wmOpacity = num(patch.wmOpacity, 0.45, 0, 0.5);
   if (patch.ticker && typeof patch.ticker === 'object') {
     const t = patch.ticker, text = str(t.text, 300);

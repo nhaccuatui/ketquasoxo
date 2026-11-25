@@ -70,11 +70,6 @@
       f1.innerHTML = (i > 0 && i <= 14) ? '<strong>' + esc(t.slice(0, i + 1)) + '</strong>' + esc(t.slice(i + 1)) : esc(t);
     }
     if (f2) f2.textContent = SITE.footer2;
-    var fs = $('#f-src'), ds = SITE.dataSource;
-    if (fs) {
-      fs.hidden = !(ds && ds.label);
-      if (ds && ds.label) fs.innerHTML = 'Nguồn dữ liệu: <a href="' + esc(ds.url || '#') + '" target="_blank" rel="noopener" style="color:inherit">' + esc(ds.label) + '</a>';
-    }
     buildWatermark();
     if (!first) render();
     document.dispatchEvent(new CustomEvent('kqxs:settings', { detail: SITE }));
@@ -111,8 +106,9 @@
   function viewDate() {
     var n = vnNow(), y = n.y, m = n.m, d = n.d, wd = n.wd, isToday = true;
     // Trước giờ chuyển ngày (mặc định 14:00) vẫn hiện kết quả của ngày hôm trước; từ 14:00 mới chờ kết quả hôm nay
-    var cut = CFG.rolloverHour != null ? CFG.rolloverHour : 14;
-    if (!dateParam && n.h < cut) {
+    // Giờ chuyển ngày do admin cài (mục 2), mặc định 14:00
+    var ro = /^(\d{1,2}):(\d{2})$/.exec(String(SITE.rollover || '')), cut = ro ? (+ro[1]) * 60 + (+ro[2]) : (CFG.rolloverHour != null ? CFG.rolloverHour : 14) * 60;
+    if (!dateParam && n.h * 60 + n.mi < cut) {
       var yd = new Date(Date.UTC(y, m - 1, d - 1));
       y = yd.getUTCFullYear(); m = yd.getUTCMonth() + 1; d = yd.getUTCDate(); wd = yd.getUTCDay(); isToday = false;
     }
@@ -180,6 +176,21 @@
     render();
     document.dispatchEvent(new CustomEvent('kqxs:data', { detail: { prev: prev, data: j, first: first } }));
   }
+  var lastLoadOk = Date.now();
+  // Đang trong giờ quay mà không có số (quá 2,5 phút) hoặc mất kết nối máy chủ quá 90 giây
+  // → hiện khung trực tiếp của Minh Ngọc thay cho bảng đang chờ
+  function fallbackKey() {
+    if (!CFG.liveFallbackUrl || dateParam) return null;
+    var V = viewDate(); if (!V.isToday) return null;
+    var keys = (tab === 'nam' || tab === 'trung' || tab === 'bac') ? [tab] : (tab === 'all' ? ['nam', 'trung', 'bac'] : []);
+    var ns = nowSecs();
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i], d = drawSecs(k), s = regionStats(k);
+      if (ns < d || ns > d + 2700 || s.complete) continue;
+      if ((ns >= d + 150 && !s.any) || Date.now() - lastLoadOk > 90000) return k;
+    }
+    return null;
+  }
   function load() {
     var iso = viewDate().iso;
     // Mốc 2 giây: mọi người xem cùng lúc dùng chung 1 bản đệm của Vercel (tiết kiệm hạn mức Redis)
@@ -188,7 +199,8 @@
       u = u.replace('{date}', iso);
       return u + (u.indexOf('?') >= 0 ? '&' : '?') + '_=' + bucket;
     });
-    fetchFirst(urls, 0, true).then(function (j) { apply(j, JSON.stringify(j)); }, function (e) {
+    fetchFirst(urls, 0, true).then(function (j) { lastLoadOk = Date.now(); apply(j, JSON.stringify(j)); }, function (e) {
+      if (e.allMissing) lastLoadOk = Date.now();
       // Lỗi mạng tạm thời: giữ nguyên số đang hiện. Chỉ xóa khi nguồn báo rõ "chưa có dữ liệu".
       if (e.allMissing) apply(null, 'none');
     });
@@ -209,11 +221,32 @@
   function waitIcon(spin) { return '<span class="wait' + (spin ? ' spin' : '') + '"></span>'; }
   function perOf(key, mode, id) { return PER[key][mode][id] || 1; }
 
-  function cell(id, n, vals, spin, per, extra) {
+  // Số chữ số của từng giải và thứ tự quay
+  var DIGITS = {
+    nam: { g8: 2, g7: 3, g6: 4, g5: 4, g4: 5, g3: 5, g2: 5, g1: 5, db: 6 },
+    bac: { g1: 5, g2: 5, g3: 5, g4: 4, g5: 4, g6: 3, g7: 2, db: 5 }
+  };
+  DIGITS.trung = DIGITS.nam;
+  var DRAW_ORDER = { nam: ['g8', 'g7', 'g6', 'g5', 'g4', 'g3', 'g2', 'g1', 'db'], bac: ['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'db'] };
+  DRAW_ORDER.trung = DRAW_ORDER.nam;
+  // Ô sắp ra số của một đài: ô trống đầu tiên theo thứ tự quay
+  function nextSlot(key, p) {
+    var o = DRAW_ORDER[key], defs = REG[key].prizes;
+    for (var a = 0; a < o.length; a++) {
+      var n = 0; defs.forEach(function (d) { if (d[0] === o[a]) n = d[3]; });
+      var arr = (p.prizes && p.prizes[o[a]]) || [];
+      for (var i = 0; i < n; i++) if (!arr[i]) return { id: o[a], i: i };
+    }
+    return null;
+  }
+  function rollDigits(n) { var s = ''; for (var i = 0; i < n; i++) s += Math.floor(Math.random() * 10); return s; }
+  function cell(id, n, vals, spin, per, extra, roll) {
     var h = '<div class="cell p-' + id + '" style="--per:' + per + '">' + (extra || '');
     for (var i = 0; i < n; i++) {
       var v = vals && vals[i];
-      h += v ? '<span class="num">' + esc(v) + '</span>' : waitIcon(spin);
+      if (v) h += '<span class="num">' + esc(v) + '</span>';
+      else if (roll && roll.id === id && roll.i === i) h += '<span class="num roll" data-n="' + roll.len + '">' + rollDigits(roll.len) + '</span>';
+      else h += waitIcon(spin);
     }
     return h + '</div>';
   }
@@ -236,6 +269,7 @@
 
   function regionTable(key, mode) {
     var R = REG[key], V = viewDate(), st = status(key), spin = st === 'drawing';
+    var rolling = st === 'drawing' && V.isToday && nowSecs() >= drawSecs(key);
     var provs = provinces(key), n = provs.length;
     var h = '<section class="tbl ' + key + ' m-' + mode + '" style="--n:' + n + '">';
     if (mode === 'all') h += '<div class="rh">KQXS ' + R.title + '</div>';
@@ -253,7 +287,9 @@
       h += '<div class="row" style="flex:' + (lines + 0.9) + ' 1 0"><div class="lab">' + d[1] + '<b>' + d[2] + '</b></div>';
       provs.forEach(function (p) {
         var extra = (key === 'bac' && d[0] === 'db') ? kyhieu() : '';
-        h += cell(d[0], d[3], p.prizes && p.prizes[d[0]], spin, per, extra);
+        var ns = rolling ? nextSlot(key, p) : null;
+        if (ns) ns.len = DIGITS[key][ns.id];
+        h += cell(d[0], d[3], p.prizes && p.prizes[d[0]], spin, per, extra, ns);
       });
       h += '</div>';
     });
@@ -290,13 +326,19 @@
     return '<div class="clockp"><span class="clk-l">GIỜ VIỆT NAM</span><span class="clk">--:--:--</span></div>';
   }
 
-  var lastSig = '';
+  var lastSig = '', fbShown = '';
   function render() {
     var V = viewDate(), h = '';
     // Tab khung ngoài: không dựng lại (tránh tải lại iframe mỗi lần có số mới)
     if (tab === 'embed' && embedIso === V.iso && $('#view .embed')) { updateTabs(); return; }
     if (tab !== 'embed') embedIso = '';
-    if (tab === 'all') {
+    var fb = tab === 'embed' ? null : fallbackKey();
+    if (fb && fbShown === fb && $('#view .embed')) { updateTabs(); return; }
+    fbShown = fb || '';
+    if (fb) {
+      h += head('KQXS ' + REG[fb].title, V) +
+        '<div class="embed"><iframe src="' + esc(CFG.liveFallbackUrl) + '" title="Kết quả trực tiếp Minh Ngọc" referrerpolicy="no-referrer"></iframe></div>';
+    } else if (tab === 'all') {
       var n = provinces('nam').length, t = provinces('trung').length;
       h += head('KẾT QUẢ XỔ SỐ 3 MIỀN', V, 'long') + '<div class="tables">';
       h += '<div style="display:flex;flex:' + (n + 1.2) + ' 1 0;min-width:0">' + regionTable('nam', 'all') + '</div>';
@@ -338,8 +380,10 @@
     updatePrep();
     var keys = (tab === 'nam' || tab === 'trung' || tab === 'bac') ? [tab] : (tab === 'all' ? ['nam', 'trung', 'bac'] : []);
     var show = keys.length && V.isToday && keys.every(function (k) { return status(k) === 'waiting'; });
+    var ns = nowSecs(), target = keys.length ? Math.min.apply(null, keys.map(drawSecs)) : 0;
+    // Còn 1 phút là tới giờ quay thì ẩn bảng đếm ngược để người xem thấy bảng kết quả
+    if (show && ns >= target - 60) show = false;
     if (!show) { el.hidden = true; cdSig = ''; return; }
-    var ns = nowSecs(), target = Math.min.apply(null, keys.map(drawSecs));
     var sig = keys.join(',');
     if (sig !== cdSig) {
       cdSig = sig;
@@ -368,7 +412,7 @@
     var iso = viewDate().iso;
     if (lastIso && iso !== lastIso && !dateParam) { data = null; dataSig = ''; }
     lastIso = iso;
-    var sig = iso + '|' + ['nam', 'trung', 'bac'].map(status).join(',') + '|' + tab;
+    var sig = iso + '|' + ['nam', 'trung', 'bac'].map(status).join(',') + '|' + tab + '|' + (fallbackKey() || '');
     if (lastSig && sig !== lastSig) { lastSig = sig; if (!dateParam) { dataSig = ''; load(); } render(); return; }
     lastSig = sig;
   }
@@ -491,6 +535,10 @@
     document.addEventListener('fullscreenchange', function () { setTimeout(fit, 50); });
     render(); fit(); pollLoop(); loadSite();
     setInterval(tick, 1000);
+    setInterval(function () {
+      var r = document.querySelectorAll('#view .roll');
+      for (var i = 0; i < r.length; i++) r[i].textContent = rollDigits(+r[i].getAttribute('data-n') || 2);
+    }, 70);
     setInterval(loadSite, Math.max(5, CFG.settingsPollSeconds || 15) * 1000);
   });
 })();

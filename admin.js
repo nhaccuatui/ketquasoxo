@@ -221,6 +221,8 @@
     FIELDS.forEach(function (k) { var e = $('#s-' + k); if (e) e.value = val(k) || ''; });
     var o = val('wmOpacity'); $('#s-wmOpacity').value = o != null ? o : 0.45; $('#s-wmv').textContent = (+$('#s-wmOpacity').value).toFixed(2);
     preview();
+    $('#ro-time').value = val('rollover') || '14:00';
+    roNow();
     var t = site.ticker || DEF.ticker || {};
     $('#t-text').value = t.text || '';
     $('#t-every').value = t.everySec != null ? t.everySec : 60;
@@ -262,6 +264,24 @@
     preview();
     msg('#s-msg', 'Đã điền chữ mặc định, bấm "Lưu nội dung" để áp dụng.');
   });
+
+  /* ---- Giờ chuyển ngày ---- */
+  function roNow() {
+    var v = $('#ro-time').value || '14:00', p = v.split(':');
+    var f = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+      .formatToParts(new Date()).forEach(function (x) { f[x.type] = x.value; });
+    var now = (+f.hour) * 60 + (+f.minute), cut = (+p[0]) * 60 + (+p[1]);
+    $('#ro-now').innerHTML = 'Bây giờ là <b>' + f.hour + ':' + f.minute + '</b> → nếu đặt chuyển lúc <b>' + v + '</b> thì trang chủ đang hiện: <b>' +
+      (now < cut ? 'kết quả ngày hôm trước' : 'ngày hôm nay (chờ quay / đang quay / kết quả hôm nay)') + '</b>.';
+  }
+  $('#ro-time').addEventListener('input', roNow);
+  setInterval(function () { if (cur === 'giaodien') roNow(); }, 30000);
+  $('#ro-save').addEventListener('click', function () {
+    var v = $('#ro-time').value;
+    if (!/^\d{2}:\d{2}$/.test(v)) { msg('#ro-msg', 'Chọn giờ hợp lệ (vd 14:00).', true); return; }
+    saveSite({ rollover: v }, '#ro-msg', 'Đã lưu ✓ Trang chủ áp dụng sau khoảng 15 giây.').catch(function () { });
+  });
+  $('#ro-def').addEventListener('click', function () { $('#ro-time').value = '14:00'; roNow(); msg('#ro-msg', 'Bấm "Lưu giờ chuyển" để áp dụng.'); });
 
   /* =================== 3. CHỮ CHẠY =================== */
   function tickerPatch(on) {

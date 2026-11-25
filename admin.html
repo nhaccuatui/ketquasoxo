@@ -136,6 +136,19 @@ table.mt{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
     <!-- 2. Giao diện -->
     <section data-panel="giaodien" hidden>
       <div class="card">
+        <h2>Giờ chuyển sang giao diện chờ quay thưởng</h2>
+        <p class="d">Trước giờ này, trang chủ hiện <b>kết quả của ngày hôm trước</b>. Từ giờ này trở đi, trang chuyển sang <b>ngày hôm nay</b>:
+          hiện bảng đếm ngược "SẮP QUAY THƯỞNG" và chờ số mới.</p>
+        <div class="bar">
+          <label style="font-weight:700">Chuyển lúc <input id="ro-time" type="time" step="60" value="14:00" style="font-size:18px"></label>
+          <button type="button" class="pri" id="ro-save">Lưu giờ chuyển</button>
+          <button type="button" id="ro-def">Đặt lại 14:00</button>
+          <span class="msg" id="ro-msg" role="status"></span>
+        </div>
+        <p class="hint" id="ro-now" style="margin-top:10px"></p>
+        <p class="hint">Giờ quay: Miền Nam 16:15 · Miền Trung 17:15 · Miền Bắc 18:15. Nên đặt trước 16:15 để kịp hiện đếm ngược.</p>
+      </div>
+      <div class="card">
         <h2>Giao diện &amp; nội dung</h2>
         <p class="d">Sửa chữ rồi bấm <b>Lưu nội dung</b>. Trang xem tự đổi sau khoảng 15 giây, không cần tải lại.</p>
         <form id="sf">

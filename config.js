@@ -13,6 +13,7 @@ window.KQXS_CONFIG = {
     wmOpacity: 0.45,
     footer1: 'Lưu ý: Vui lòng đối chiếu kết quả chính thức trước khi lĩnh thưởng.',
     footer2: '© Đức Anh – Kết quả xổ số hôm nay · Kết quả xổ số trực tiếp · Xổ số kiến thiết',
+    rollover: '14:00',   // giờ chuyển sang giao diện chờ quay (sửa trong admin, mục 2)
     ticker: { text: '', on: false, everySec: 60, seconds: 20, pos: 'mid', id: 0 },
     music: []
   },
@@ -28,7 +29,7 @@ window.KQXS_CONFIG = {
   settingsPollSeconds: 15,
 
   // Giờ bắt đầu quay thưởng (giờ Việt Nam). Sửa nếu đài đổi lịch.
-  rolloverHour: 14,   // trước 14:00 hiện kết quả hôm trước, từ 14:00 chờ kết quả hôm nay
+  rolloverHour: 14,   // chỉ dùng khi admin chưa cài giờ chuyển ngày
   drawTime: { nam: '16:15', trung: '17:15', bac: '18:15' },
 
   // Nguồn lấy kết quả tự động (Minh Ngọc / Xổ Số VN) chọn trong trang admin, mục 7.
@@ -38,6 +39,10 @@ window.KQXS_CONFIG = {
   // Nếu khung trống, đổi thành 'https://www.minhngoc.net.vn/free/index.php'. Để '' để ẩn tab.
   embedUrl: 'https://www.minhngoc.net.vn/free/xo-so-truc-tiep.html',
   embedLabel: 'Trực tiếp Minh Ngọc',
+
+  // Đang giờ quay mà trang không lấy được số (quá 2,5 phút chưa có số nào, hoặc mất kết nối máy chủ)
+  // thì tự hiện khung trực tiếp của Minh Ngọc ngay trong bảng. Có số lại thì tự quay về bảng của trang. Để '' để tắt.
+  liveFallbackUrl: 'https://www.minhngoc.net.vn/free/xo-so-truc-tiep.html',
 
   /* ----- Nhạc nền -----
      Nhạc chỉ thêm trong trang admin (mục 4. Nhạc). File 1.mp3 … 20.mp3 trong thư mục music/ vẫn được phát nếu có. */

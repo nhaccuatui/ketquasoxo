@@ -15,10 +15,8 @@ export default async function handler(req, res) {
       const mode = ['minhngoc', 'xosovnm', 'off'].includes(b.mode) ? b.mode : 'minhngoc';
       const cfg = { mode, fallback: b.fallback !== false };
       await redis('SET', K.src, JSON.stringify(cfg));
-      // Ghi tên nguồn vào nội dung trang để hiện dòng "Nguồn dữ liệu" ở chân trang
-      let st = {}; try { st = JSON.parse((await redis('GET', K.settings)) || '{}'); } catch { st = {}; }
-      st.dataSource = mode === 'off' ? null : { label: SOURCES[mode].label.replace(/\s*\(.*\)$/, ''), url: SOURCES[mode].home };
-      await redis('SET', K.settings, JSON.stringify(st));
+      // Không hiện dòng "Nguồn dữ liệu" ở trang chủ: xóa nếu bản cũ đã ghi
+      try { const st = JSON.parse((await redis('GET', K.settings)) || '{}'); if (st.dataSource !== undefined) { delete st.dataSource; await redis('SET', K.settings, JSON.stringify(st)); } } catch { }
       return sendJson(res, 200, { ok: true, cfg, sources });
     }
     if (b.action === 'sync') {
