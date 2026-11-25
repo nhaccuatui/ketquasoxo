@@ -10,6 +10,9 @@ export const K = {
   sizes: 'kqxs:sizes',        // hash: ngày -> số byte
   dirty: 'kqxs:dirty',        // set: các ngày đã đổi, chưa sao lưu GitHub
   lastBackup: 'kqxs:lastbackup',
+  src: 'kqxs:src',            // nguồn lấy kết quả tự động
+  srcStat: 'kqxs:srcstat',    // lần lấy gần nhất
+  lock: (r) => 'kqxs:lock:' + r,
   day: (d) => 'kqxs:r:' + d
 };
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

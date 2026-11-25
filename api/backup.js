@@ -1,6 +1,7 @@
 // Sao lưu dữ liệu lên GitHub (thư mục data/), gộp thành 1 commit.
 // GET  /api/backup  -> Vercel Cron gọi mỗi ngày (cần CRON_SECRET)
 // POST /api/backup  (Bearer mật khẩu admin) body {month?:"YYYY-MM"} -> nút "Sao lưu ngay"
+import { syncDay } from './_sources.js';
 import { K, addDays, bearer, fail, ghCommit, hashToObj, pipeline, readBody, redis, requireAdmin, secretOk, sendJson, vnToday } from './_lib.js';
 
 export default async function handler(req, res) {
@@ -16,6 +17,9 @@ export default async function handler(req, res) {
       if (/^\d{4}-\d{2}$/.test(String(b.month || ''))) month = b.month;
       by = 'admin';
     } else return sendJson(res, 405, { message: 'Chỉ nhận GET/POST' });
+
+    // Trước khi sao lưu: lấy đủ kết quả hôm nay từ nguồn tự động (nếu đang bật) để lấp ô còn thiếu
+    try { await syncDay(vnToday()); } catch { }
 
     const [dirtyList, flat] = await pipeline([['SMEMBERS', K.dirty], ['HGETALL', K.sizes]]);
     const have = hashToObj(flat);

@@ -31,9 +31,7 @@ window.KQXS_CONFIG = {
   rolloverHour: 14,   // trước 14:00 hiện kết quả hôm trước, từ 14:00 chờ kết quả hôm nay
   drawTime: { nam: '16:15', trung: '17:15', bac: '18:15' },
 
-  // Nút "Mở nguồn tham khảo" trong admin: để '' là ẩn (theo yêu cầu, đã bỏ xsmn.mobi)
-  sourceUrl: '',
-  sourceLabel: '',
+  // Nguồn lấy kết quả tự động (Minh Ngọc / Xổ Số VN) chọn trong trang admin, mục 7.
 
   // Tab "Trực tiếp Minh Ngọc" ở trang chủ: nhúng khung kết quả trực tiếp của Minh Ngọc
   // theo cách Minh Ngọc cho phép (thêm /free sau tên miền, chỉ chạy khi nhúng).

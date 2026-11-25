@@ -1,12 +1,33 @@
 {
   "crons": [
-    { "path": "/api/backup", "schedule": "0 13 * * *" }
+    {
+      "path": "/api/backup",
+      "schedule": "0 13 * * *"
+    }
   ],
   "functions": {
-    "api/backup.js": { "maxDuration": 60 },
-    "api/clear.js": { "maxDuration": 60 }
+    "api/backup.js": {
+      "maxDuration": 60
+    },
+    "api/clear.js": {
+      "maxDuration": 60
+    },
+    "api/source.js": {
+      "maxDuration": 30
+    },
+    "api/results.js": {
+      "maxDuration": 30
+    }
   },
   "headers": [
-    { "source": "/admin.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
+    {
+      "source": "/admin.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
   ]
 }

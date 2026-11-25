@@ -114,6 +114,7 @@ table.mt{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
       <button type="button" data-sec="nhac">4. Nhạc</button>
       <button type="button" data-sec="dulieu">5. Dữ liệu &amp; lưu trữ</button>
       <button type="button" data-sec="matkhau">6. Mật khẩu</button>
+      <button type="button" data-sec="nguon">7. Nguồn kết quả</button>
     </nav>
 
     <!-- 1. Nhập số -->
@@ -121,7 +122,7 @@ table.mt{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
       <div class="card bar">
         <label>Ngày <input id="date" type="date"></label>
         <div id="rtabs" class="bar"></div>
-        <a id="src-link" href="#" target="_blank" rel="noopener" hidden style="font-weight:700;color:#d70f28">Mở nguồn tham khảo ↗</a>
+        <button type="button" id="g-fetch" class="ok" hidden>Lấy số từ nguồn ngay</button>
         <span id="status" role="status"></span>
       </div>
       <div class="card" style="overflow:auto"><div id="grid"></div></div>
@@ -256,6 +257,36 @@ table.mt{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
           <div class="f" style="grid-template-columns:1fr"><label for="p-new2">Gõ lại mật khẩu mới</label><input id="p-new2" type="password" autocomplete="new-password" minlength="6" required></div>
           <div class="bar"><button class="pri" type="submit">Đổi mật khẩu</button><span class="msg" id="p-msg" role="status"></span></div>
         </form>
+      </div>
+    </section>
+
+    <!-- 7. Nguồn kết quả tự động -->
+    <section data-panel="nguon" hidden>
+      <div class="card">
+        <h2>Nguồn kết quả tự động</h2>
+        <p class="d">Chọn nơi lấy số rồi bấm <b>Lưu nguồn</b>. Trong giờ quay, trang tự lấy số mới khoảng <b>6 giây/lần</b> khi có người đang xem (cửa sổ livestream cũng tính). Bạn vẫn sửa tay được ở mục 1 bất cứ lúc nào.</p>
+        <div id="src-opts" style="display:grid;gap:10px;margin-bottom:12px"></div>
+        <label class="row" style="font-weight:600;font-size:14px;gap:8px"><input type="checkbox" id="src-fb" checked> Nếu nguồn đã chọn bị lỗi thì tự lấy từ nguồn còn lại</label>
+        <div class="bar"><button type="button" class="pri" id="src-save">Lưu nguồn</button><span class="msg" id="src-msg" role="status"></span></div>
+
+        <div class="box">
+          <h3 style="margin-top:0">Thử lấy kết quả</h3>
+          <div class="row">
+            <label>Ngày <input id="src-date" type="date"></label>
+            <label>Từ nguồn <select id="src-test-mode"><option value="minhngoc">Minh Ngọc</option><option value="xosovnm">Xổ Số VN</option></select></label>
+          </div>
+          <div class="bar">
+            <button type="button" id="src-try">Xem thử (chưa lưu)</button>
+            <button type="button" class="ok" id="src-apply">Lấy &amp; lưu vào trang</button>
+            <span class="msg" id="src-tmsg" role="status"></span>
+          </div>
+          <div id="src-preview" style="margin-top:12px;overflow:auto"></div>
+        </div>
+
+        <div class="box">
+          <h3 style="margin-top:0">Lần tự lấy gần nhất</h3>
+          <div id="src-last" class="hint">--</div>
+        </div>
       </div>
     </section>
   </div>

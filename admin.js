@@ -46,6 +46,7 @@
     document.querySelectorAll('[data-panel]').forEach(function (p) { p.hidden = p.dataset.panel !== s; });
     document.querySelectorAll('#secnav [data-sec]').forEach(function (b) { b.classList.toggle('on', b.dataset.sec === s); });
     if (s === 'dulieu') loadStorage();
+    if (s === 'nguon') loadSource();
   }
   $('#secnav').addEventListener('click', function (e) { var b = e.target.closest('[data-sec]'); if (b) showSec(b.dataset.sec); });
 
@@ -144,9 +145,11 @@
   function numInputs() { return Array.prototype.slice.call(document.querySelectorAll('#grid input.n')); }
   function focusAt(list, i) { var e = list[i]; if (e) { e.focus(); e.select(); } }
 
+  var lastInput = 0;
   document.addEventListener('input', function (e) {
     var el = e.target;
     if (!el.classList || !el.classList.contains('n')) return;
+    lastInput = Date.now();
     var v = setVal(el);
     queueSave();
     if (v.length >= (+el.maxLength)) { var l = numInputs(); focusAt(l, l.indexOf(el) + 1); }
@@ -190,6 +193,26 @@
       });
   }
   $('#date').addEventListener('change', loadDay);
+  // Tự tải lại bảng nhập khi nguồn tự động vừa thêm số (chỉ khi bạn không đang gõ)
+  setInterval(function () {
+    if (!doc || cur !== 'nhap' || document.hidden) return;
+    var a = document.activeElement;
+    if (Date.now() - lastInput < 8000 || saveT && Date.now() - lastInput < 9000 || (a && a.classList && (a.classList.contains('n') || a.classList.contains('pn') || a.classList.contains('pc')) && Date.now() - lastInput < 20000)) return;
+    var iso = doc.date;
+    fetch('api/results?date=' + iso + '&_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d || !doc || doc.date !== iso || Date.now() - lastInput < 8000) return;
+      var n = normalize(d, iso);
+      if (JSON.stringify(n[region]) === JSON.stringify(doc[region]) && JSON.stringify(n.bac.kyhieu) === JSON.stringify(doc.bac.kyhieu)) { doc = n; return; }
+      doc = n; renderGrid(); status('Đã cập nhật số mới từ nguồn tự động');
+    }).catch(function () { });
+  }, 8000);
+  $('#g-fetch').addEventListener('click', function () {
+    var b = $('#g-fetch'); b.disabled = true; status('Đang lấy số từ nguồn...');
+    api('api/source', 'POST', { action: 'sync', date: $('#date').value || todayVN() }).then(function (r) {
+      if (r.skipped) { status('Nguồn tự động đang tắt (mục 7).', true); return; }
+      loadDay(); status(srcSummary(r));
+    }).catch(function (e) { status('Lỗi: ' + e.message, true); }).then(function () { b.disabled = false; });
+  });
 
   /* =================== 2. GIAO DIỆN & NỘI DUNG =================== */
   var FIELDS = ['siteName', 'slogan', 'leftText', 'rightText', 'line1', 'line2', 'wmText', 'footer1', 'footer2'];
@@ -434,12 +457,99 @@
     }).catch(function (er) { msg('#p-msg', er.status === 401 ? 'Mật khẩu hiện tại không đúng.' : 'Lỗi: ' + er.message, true); });
   });
 
+
+  /* =================== 7. NGUỒN KẾT QUẢ =================== */
+  var SRC = { cfg: null, sources: [] };
+  var RNAME = { nam: 'Miền Nam', trung: 'Miền Trung', bac: 'Miền Bắc' };
+  function srcSummary(r) {
+    if (!r || !r.report) return '';
+    return Object.keys(r.report).map(function (k) {
+      var x = r.report[k];
+      return RNAME[k] + ': ' + (x.ok ? (x.filled + ' số' + (x.changed ? ' (+' + x.changed + ' mới)' : '')) : 'lỗi');
+    }).join(' · ');
+  }
+  function renderSrcOpts() {
+    var cfg = SRC.cfg || { mode: 'minhngoc', fallback: true };
+    var opts = [
+      { id: 'minhngoc', t: 'Minh Ngọc (minhngoc.net.vn) – ưu tiên', d: 'Đọc trực tiếp trang kết quả của Minh Ngọc. Không phải API chính thức: nếu Minh Ngọc đổi giao diện hoặc chặn, trang sẽ báo lỗi và (nếu bật ô bên dưới) tự chuyển sang Xổ Số VN.' },
+      { id: 'xosovnm', t: 'Xổ Số VN (xosovnm.net)', d: 'API công khai, miễn phí, không cần đăng ký.' },
+      { id: 'off', t: 'Tắt – chỉ nhập tay', d: 'Không tự lấy số; bạn nhập ở mục 1.' }
+    ];
+    $('#src-opts').innerHTML = opts.map(function (o) {
+      return '<label class="box" style="margin:0;display:flex;gap:12px;align-items:flex-start;cursor:pointer' + (cfg.mode === o.id ? ';border-color:#d70f28;background:#fff7f8' : '') + '">' +
+        '<input type="radio" name="src-mode" value="' + o.id + '"' + (cfg.mode === o.id ? ' checked' : '') + ' style="margin-top:4px">' +
+        '<span><b>' + o.t + '</b><br><span class="hint">' + o.d + '</span></span></label>';
+    }).join('');
+    $('#src-fb').checked = cfg.fallback !== false;
+    $('#g-fetch').hidden = cfg.mode === 'off';
+  }
+  function renderSrcLast(last) {
+    if (!last) { $('#src-last').textContent = 'Chưa có lần lấy nào.'; return; }
+    var h = '<b>' + fmtTime(last.at) + '</b> · ngày ' + last.date.split('-').reverse().join('/') + '<br>';
+    Object.keys(last.report || {}).forEach(function (k) {
+      var x = last.report[k];
+      h += RNAME[k] + ': ' + (x.ok ? '✓ ' + x.filled + ' số' + (x.note ? ' <i>(' + esc(x.note) + ')</i>' : '') : '<b style="color:#d70f28">lỗi – ' + esc(x.error) + '</b>') + '<br>';
+    });
+    $('#src-last').innerHTML = h;
+  }
+  function loadSource() {
+    if (!$('#src-date').value) $('#src-date').value = todayVN();
+    api('api/source', 'POST', { action: 'get' }).then(function (j) {
+      SRC.cfg = j.cfg; SRC.sources = j.sources; renderSrcOpts(); renderSrcLast(j.last);
+      $('#src-test-mode').value = j.cfg.mode === 'xosovnm' ? 'xosovnm' : 'minhngoc';
+    }).catch(function (e) { msg('#src-msg', e.message, true); });
+  }
+  $('#src-opts').addEventListener('change', function () {
+    var r = document.querySelector('input[name=src-mode]:checked');
+    if (r) { SRC.cfg = Object.assign({}, SRC.cfg, { mode: r.value }); renderSrcOpts(); }
+  });
+  $('#src-save').addEventListener('click', function () {
+    var r = document.querySelector('input[name=src-mode]:checked');
+    msg('#src-msg', 'Đang lưu...');
+    api('api/source', 'POST', { action: 'save', mode: r ? r.value : 'minhngoc', fallback: $('#src-fb').checked }).then(function (j) {
+      SRC.cfg = j.cfg; renderSrcOpts();
+      msg('#src-msg', j.cfg.mode === 'off' ? 'Đã tắt lấy số tự động ✓' : 'Đã lưu ✓ Từ giờ trang tự lấy số từ ' + (j.cfg.mode === 'minhngoc' ? 'Minh Ngọc' : 'Xổ Số VN') + '.');
+    }).catch(function (e) { msg('#src-msg', 'Lỗi: ' + e.message, true); });
+  });
+  function previewTable(d) {
+    var h = '';
+    ['nam', 'trung', 'bac'].forEach(function (k) {
+      var ps = (d[k] && d[k].provinces) || [];
+      if (!ps.length) return;
+      var defs = DEFS[k];
+      h += '<h3>' + RNAME[k] + '</h3><table class="mt"><thead><tr><th></th>' + ps.map(function (p) { return '<th>' + esc(p.name) + (p.code ? '<br><small>' + esc(p.code) + '</small>' : '') + '</th>'; }).join('') + '</tr></thead><tbody>';
+      defs.slice().reverse().forEach(function (df) {
+        h += '<tr><th>' + df[1] + '</th>' + ps.map(function (p) { return '<td>' + esc(((p.prizes && p.prizes[df[0]]) || []).filter(Boolean).join(' · ')) + '</td>'; }).join('') + '</tr>';
+      });
+      if (k === 'bac' && d.bac.kyhieu && d.bac.kyhieu.length) h += '<tr><th>Ký hiệu ĐB</th><td>' + esc(d.bac.kyhieu.join(' - ')) + '</td></tr>';
+      h += '</tbody></table>';
+    });
+    return h || '<p class="hint">Nguồn chưa có số của ngày này.</p>';
+  }
+  function trySrc(dry) {
+    var date = $('#src-date').value || todayVN(), mode = $('#src-test-mode').value;
+    $('#src-try').disabled = $('#src-apply').disabled = true;
+    msg('#src-tmsg', 'Đang lấy từ ' + (mode === 'minhngoc' ? 'Minh Ngọc' : 'Xổ Số VN') + '...');
+    api('api/source', 'POST', { action: 'sync', date: date, mode: mode, dry: dry }).then(function (r) {
+      var bad = Object.keys(r.report || {}).filter(function (k) { return !r.report[k].ok; });
+      msg('#src-tmsg', (dry ? 'Xem thử: ' : 'Đã lưu ✓ ') + srcSummary(r), bad.length > 0);
+      $('#src-preview').innerHTML = (bad.length ? '<p class="msg bad">' + bad.map(function (k) { return RNAME[k] + ': ' + esc(r.report[k].error); }).join('<br>') + '</p>' : '') + previewTable(r.doc);
+      if (!dry) { renderSrcLast(r); if ($('#date').value === date) loadDay(); }
+    }).catch(function (e) { msg('#src-tmsg', 'Lỗi: ' + e.message, true); })
+      .then(function () { $('#src-try').disabled = $('#src-apply').disabled = false; });
+  }
+  $('#src-try').addEventListener('click', function () { trySrc(true); });
+  $('#src-apply').addEventListener('click', function () {
+    if (!confirm('Lấy số từ nguồn và lưu vào ngày ' + ($('#src-date').value || todayVN()).split('-').reverse().join('/') + '? Ô đã có số sẽ được thay bằng số của nguồn.')) return;
+    trySrc(false);
+  });
+
   /* =================== ĐĂNG NHẬP =================== */
   function enter() {
     $('#login').hidden = true; $('#app').hidden = false; $('#logout').hidden = false;
     $('#date').value = todayVN();
-    if (CFG.sourceUrl) { var sl = $('#src-link'); sl.href = CFG.sourceUrl; sl.textContent = 'Mở nguồn tham khảo ' + (CFG.sourceLabel || '') + ' ↗'; sl.hidden = false; }
     loadDay(); loadSite();
+    api('api/source', 'POST', { action: 'get' }).then(function (j) { SRC.cfg = j.cfg; $('#g-fetch').hidden = j.cfg.mode === 'off'; }).catch(function () { });
     showSec(cur);
   }
   $('#logout').addEventListener('click', function () {

@@ -70,6 +70,11 @@
       f1.innerHTML = (i > 0 && i <= 14) ? '<strong>' + esc(t.slice(0, i + 1)) + '</strong>' + esc(t.slice(i + 1)) : esc(t);
     }
     if (f2) f2.textContent = SITE.footer2;
+    var fs = $('#f-src'), ds = SITE.dataSource;
+    if (fs) {
+      fs.hidden = !(ds && ds.label);
+      if (ds && ds.label) fs.innerHTML = 'Nguồn dữ liệu: <a href="' + esc(ds.url || '#') + '" target="_blank" rel="noopener" style="color:inherit">' + esc(ds.label) + '</a>';
+    }
     buildWatermark();
     if (!first) render();
     document.dispatchEvent(new CustomEvent('kqxs:settings', { detail: SITE }));

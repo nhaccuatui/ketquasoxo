@@ -40,9 +40,20 @@ Blob giờ chỉ dùng để chứa file nhạc mp3 tải lên.
 | `clear.js` | Xóa dữ liệu 1 tháng |
 | `backup.js` | Sao lưu GitHub (tự động + nút bấm) |
 | `upload.js` | Tải file nhạc lên Vercel Blob |
+| `source.js` | Chọn nguồn tự động, thử lấy / lấy ngay |
+| `_sources.js` | Đọc Minh Ngọc / Xổ Số VN (không phải route) |
 
 ## Nguồn dữ liệu
-Trang không tự lấy số từ trang khác. Số được nhập tay trong admin (mục 1), hoặc một chương trình bên ngoài gửi vào:
+Admin mục **7. Nguồn kết quả** chọn 1 trong 2 nguồn tự động (hoặc tắt để nhập tay):
+- **Minh Ngọc** (mặc định, ưu tiên): đọc trang `minhngoc.net.vn/ket-qua-xo-so/<miền>/<DD-MM-YYYY>.html`. Minh Ngọc không có API dữ liệu
+  (chỉ có khung nhúng iframe), nên đây không phải kênh chính thức: nếu họ đổi giao diện hoặc chặn, trang báo lỗi ở mục 7.
+- **Xổ Số VN**: API công khai `api.xosovnm.net/api` (không cần key).
+- Ô "tự chuyển sang nguồn còn lại nếu lỗi" bật sẵn.
+- Trong giờ quay, mỗi lần có người xem (kể cả cửa sổ OBS) mà đã quá 6 giây, máy chủ tự lấy số mới của miền đang quay.
+  Quay xong mà chưa đủ số thì 2 phút lấy lại 1 lần. Lúc sao lưu tự động 20:00 cũng lấy lại đủ cả ngày.
+- Số tự lấy chỉ thay ô có số mới; ô nguồn chưa có thì giữ số nhập tay. Vẫn sửa tay được ở mục 1.
+
+Ngoài ra vẫn có thể nhập tay trong admin (mục 1), hoặc một chương trình bên ngoài gửi vào:
 `POST /api/push`, header `Authorization: Bearer <mật khẩu hoặc PUSH_TOKEN>`, nội dung JSON cùng cấu trúc `data/2026-11-09.json`.
 
 ## Lưu ý
