@@ -1,6 +1,28 @@
 {
- "dataSource": {
-  "label": "Minh Ngọc",
-  "url": "https://www.minhngoc.net.vn/"
- }
+ "siteName": "Xổ Số Đức Anh",
+ "slogan": "KẾT QUẢ XỔ SỐ TRỰC TIẾP MỖI NGÀY",
+ "leftText": "TRỰC TIẾP XỔ SỐ ĐỨC ANH YOUTUBE",
+ "rightText": "KẾT QUẢ XỔ SỐ TRỰC TIẾP MỖI NGÀY",
+ "line1": "Kết Quả Xổ Số Hôm Nay – Kết Quả Xổ Số Trực Tiếp Đức Anh",
+ "line2": "Kết quả xổ số kiến thiết 3 miền, cập nhật trực tiếp mỗi ngày",
+ "wmText": "Xổ Số Đức Anh",
+ "footer1": "Lưu ý: Vui lòng đối chiếu kết quả chính thức trước khi lĩnh thưởng.",
+ "footer2": "© Đức Anh – Kết quả xổ số hôm nay · Kết quả xổ số trực tiếp · Xổ số kiến thiết - QL2",
+ "wmOpacity": 0.45,
+ "updatedAt": "2026-11-25T10:07:23.452Z",
+ "ticker": {
+  "text": "Bạn đang xem live từ trang youtube Sổ Xố Đức Anh",
+  "on": true,
+  "everySec": 60,
+  "seconds": 20,
+  "pos": "mid",
+  "id": 1795601108525
+ },
+ "music": [
+  {
+   "url": "https://www.youtube.com/watch?v=lnOQsopoFgM&t=58s",
+   "title": "",
+   "kind": "yt"
+  }
+ ]
 }
