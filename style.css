@@ -606,7 +606,10 @@ body.prep-nam .tbl.nam .wait,body.prep-trung .tbl.trung .wait,body.prep-bac .tbl
 /* v17: số đang quay chạy ngẫu nhiên (giống Minh Ngọc) */
 .num.roll{color:#ff7a00!important;opacity:1;font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(255,170,0,.45)}
 /* v18: xem từng miền – giải tư mỗi số một dòng */
-.nam.m-single .p-g4 .num,.trung.m-single .p-g4 .num{font-size:56px;line-height:1}
+.nam.m-single .p-g4 .num,.trung.m-single .p-g4 .num{font-size:80px;line-height:1.05}
 .nam.m-single .p-g8 .num,.nam.m-single .p-g7 .num,.nam.m-single .p-db .num,
 .trung.m-single .p-g8 .num,.trung.m-single .p-g7 .num,.trung.m-single .p-db .num{font-size:118px;line-height:1}
 .nam.m-single .p-g4,.trung.m-single .p-g4{row-gap:0;padding-top:4px;padding-bottom:4px}
+/* v19: nền nhạt cho phần số Xổ Số Thần Tài */
+.sbox.thantai .balls{background:rgb(28 190 255 / 30%);margin:24px 30px 0;padding:28px 20px;border-radius:24px}
+.sbox.thantai{padding-bottom:30px}

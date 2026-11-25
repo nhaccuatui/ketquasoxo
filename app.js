@@ -20,8 +20,8 @@
   ];
   // Số giải trên một hàng
   var PER = {
-    nam: { all: {}, single: { g6: 3, g4: 1, g3: 2 } },
-    trung: { all: {}, single: { g6: 3, g4: 1, g3: 2 } },
+    nam: { all: {}, single: { g6: 3, g4: 2, g3: 2 } },
+    trung: { all: {}, single: { g6: 3, g4: 2, g3: 2 } },
     bac: {
       all: { db: 1, g1: 1, g2: 2, g3: 2, g4: 2, g5: 2, g6: 3, g7: 4 },
       single: { db: 1, g1: 1, g2: 2, g3: 3, g4: 4, g5: 3, g6: 3, g7: 4 }
@@ -284,7 +284,6 @@
     R.prizes.forEach(function (d) {
       var per = perOf(key, mode, d[0]);
       var lines = Math.ceil(d[3] / per) + (key === 'bac' && d[0] === 'db' ? 1 : 0);
-      if (per === 1 && d[3] > 3) lines = d[3] * 0.62; // giải tư mỗi số một dòng: dòng thấp hơn
       h += '<div class="row" style="flex:' + (lines + 0.9) + ' 1 0"><div class="lab">' + d[1] + '<b>' + d[2] + '</b></div>';
       provs.forEach(function (p) {
         var extra = (key === 'bac' && d[0] === 'db') ? kyhieu() : '';
@@ -356,7 +355,7 @@
         h += '<aside class="side">' +
           '<div class="sbox"><h3>Điện Toán 1*2*3</h3><div class="balls">' +
           balls(data && data.dt123, [1, 2, 3], function (g) { return 'g' + (g + 1); }) + '</div></div>' +
-          '<div class="sbox"><h3>Xổ Số Thần Tài</h3><div class="balls">' +
+          '<div class="sbox thantai"><h3>Xổ Số Thần Tài</h3><div class="balls">' +
           balls(data && data.thantai, [4], function () { return 't'; }) + '</div></div>' + clockBlock() + '</aside>';
       }
       h += regionTable(tab, 'single') + '</div>';
