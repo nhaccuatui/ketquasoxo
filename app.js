@@ -244,9 +244,11 @@
     var h = '<div class="cell p-' + id + '" style="--per:' + per + '">' + (extra || '');
     for (var i = 0; i < n; i++) {
       var v = vals && vals[i];
+      h += '<span class="it' + (i % per === 0 ? ' c0' : '') + '">';
       if (v) h += '<span class="num">' + esc(v) + '</span>';
       else if (roll && roll.id === id && roll.i === i) h += '<span class="num roll" data-n="' + roll.len + '">' + rollDigits(roll.len) + '</span>';
       else h += waitIcon(spin);
+      h += '</span>';
     }
     return h + '</div>';
   }
