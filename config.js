@@ -40,9 +40,6 @@ window.KQXS_CONFIG = {
   embedUrl: '',      // đã bỏ tab "Trực tiếp Minh Ngọc" khỏi trang chủ (xem trong admin, mục 7)
   embedLabel: '',
 
-  // Đang giờ quay mà trang không lấy được số (quá 2,5 phút chưa có số nào, hoặc mất kết nối máy chủ)
-  // thì tự hiện khung trực tiếp của Minh Ngọc ngay trong bảng. Có số lại thì tự quay về bảng của trang. Để '' để tắt.
-  liveFallbackUrl: 'https://www.minhngoc.net.vn/free/xo-so-truc-tiep.html',
 
   /* ----- Nhạc nền -----
      Nhạc chỉ thêm trong trang admin (mục 4. Nhạc). File 1.mp3 … 20.mp3 trong thư mục music/ vẫn được phát nếu có. */

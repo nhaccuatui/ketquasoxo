@@ -144,7 +144,7 @@
 
   /* ---------- Dữ liệu ---------- */
   var data = null, dataSig = '';
-  var TABS = ['all', 'nam', 'trung', 'bac'].concat(CFG.embedUrl ? ['embed'] : []);
+  var TABS = ['all', 'nam', 'trung', 'bac'];
   var tab = TABS.indexOf(params.get('tab')) >= 0 ? params.get('tab') : 'all';
 
   function provinces(key) {
@@ -171,7 +171,7 @@
     return 'drawing';
   }
 
-  var loaded = false, lastIso = '', embedIso = '';
+  var loaded = false, lastIso = '';
   function fetchFirst(urls, i, allMissing) {
     if (i >= urls.length) { var e = new Error('no data'); e.allMissing = allMissing; return Promise.reject(e); }
     var t0 = Date.now();
@@ -190,20 +190,6 @@
     document.dispatchEvent(new CustomEvent('kqxs:data', { detail: { prev: prev, data: j, first: first } }));
   }
   var lastLoadOk = Date.now();
-  // Đang trong giờ quay mà không có số (quá 2,5 phút) hoặc mất kết nối máy chủ quá 90 giây
-  // → hiện khung trực tiếp của Minh Ngọc thay cho bảng đang chờ
-  function fallbackKey() {
-    if (!CFG.liveFallbackUrl || dateParam) return null;
-    var V = viewDate(); if (!V.isToday) return null;
-    var keys = (tab === 'nam' || tab === 'trung' || tab === 'bac') ? [tab] : (tab === 'all' ? ['nam', 'trung', 'bac'] : []);
-    var ns = nowSecs();
-    for (var i = 0; i < keys.length; i++) {
-      var k = keys[i], d = drawSecs(k), s = regionStats(k);
-      if (ns < d || ns > d + 2700 || s.complete) continue;
-      if ((ns >= d + 150 && !s.any) || Date.now() - lastLoadOk > 90000) return k;
-    }
-    return null;
-  }
   function load() {
     var iso = viewDate().iso;
     // Mốc 2 giây: mọi người xem cùng lúc dùng chung 1 bản đệm của Vercel (tiết kiệm hạn mức Redis)
@@ -358,28 +344,16 @@
     return '<div class="clockp"><span class="clk-l">GIỜ VIỆT NAM</span><span class="clk">--:--:--</span></div>';
   }
 
-  var lastSig = '', fbShown = '';
+  var lastSig = '';
   function render() {
     var V = viewDate(), h = '';
-    // Tab khung ngoài: không dựng lại (tránh tải lại iframe mỗi lần có số mới)
-    if (tab === 'embed' && embedIso === V.iso && $('#view .embed')) { updateTabs(); return; }
-    if (tab !== 'embed') embedIso = '';
-    var fb = tab === 'embed' ? null : fallbackKey();
-    if (fb && fbShown === fb && $('#view .embed')) { updateTabs(); return; }
-    fbShown = fb || '';
-    if (fb) {
-      h += head('KQXS ' + REG[fb].title, V) +
-        '<div class="embed"><iframe src="' + esc(CFG.liveFallbackUrl) + '" title="Kết quả trực tiếp Minh Ngọc" referrerpolicy="no-referrer"></iframe></div>';
-    } else if (tab === 'all') {
+    // Khung kết quả LUÔN là bảng của trang (không bao giờ nhúng trang ngoài vào đây)
+    if (tab === 'all') {
       var n = provinces('nam').length, t = provinces('trung').length;
       h += head('KẾT QUẢ XỔ SỐ 3 MIỀN', V, 'long') + '<div class="tables">';
       h += '<div style="display:flex;flex:' + (n + 1.2) + ' 1 0;min-width:0">' + regionTable('nam', 'all') + '</div>';
       h += '<div style="display:flex;flex:' + (t + 1.2) + ' 1 0;min-width:0">' + regionTable('trung', 'all') + '</div>';
       h += '<div class="bacwrap" style="flex:3.2 1 0">' + regionTable('bac', 'all') + clockBlock() + '</div></div>';
-    } else if (tab === 'embed') {
-      h += head('XỔ SỐ TRỰC TIẾP', V) +
-        '<div class="embed"><iframe src="' + esc(CFG.embedUrl) + '" title="Khung xổ số trực tiếp" referrerpolicy="no-referrer" allow="autoplay"></iframe></div>';
-      embedIso = V.iso;
     } else {
       var R = REG[tab];
       h += head('KQXS ' + R.title, V) + '<div class="single">';
@@ -447,7 +421,7 @@
     var iso = viewDate().iso;
     if (lastIso && iso !== lastIso && !dateParam) { data = null; dataSig = ''; }
     lastIso = iso;
-    var sig = iso + '|' + ['nam', 'trung', 'bac'].map(status).join(',') + '|' + tab + '|' + (fallbackKey() || '');
+    var sig = iso + '|' + ['nam', 'trung', 'bac'].map(status).join(',') + '|' + tab;
     if (lastSig && sig !== lastSig) { lastSig = sig; if (!dateParam) { dataSig = ''; load(); } render(); return; }
     lastSig = sig;
   }
@@ -545,14 +519,20 @@
     document.body.appendChild(b);
   }
 
+  /* ---------- Tự tải lại trang khi có bản cập nhật mới (cửa sổ OBS mở cả ngày vẫn chạy bản mới nhất) ---------- */
+  var APP_VER = '2026-11-26-2';
+  function checkVersion() {
+    fetch('version.json?_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (j && j.v && j.v !== APP_VER) location.reload();
+    }).catch(function () { });
+  }
+
   /* ---------- Khởi động ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     var fullView = params.get('view') === 'full';
     if (params.get('obs') === '1' || fullView) document.body.classList.add('obs');
     if (fullView) setupFullView();
     buildShare();
-    var eb = document.querySelector('.tabs [data-tab="embed"]');
-    if (eb && CFG.embedUrl) { eb.hidden = false; eb.textContent = CFG.embedLabel || 'Khung ngoài'; }
     applySite(true);
     document.querySelectorAll('.tabs [data-tab]').forEach(function (b) {
       b.addEventListener('click', function () { setTab(b.getAttribute('data-tab')); });
@@ -570,6 +550,7 @@
     document.addEventListener('fullscreenchange', function () { setTimeout(fit, 50); });
     render(); fit(); pollLoop(); loadSite();
     setInterval(tick, 1000);
+    setInterval(checkVersion, 60000);
     setInterval(function () {
       var r = document.querySelectorAll('#view .roll');
       for (var i = 0; i < r.length; i++) r[i].textContent = rollDigits(+r[i].getAttribute('data-n') || 2);
