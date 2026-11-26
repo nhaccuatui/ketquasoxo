@@ -339,7 +339,7 @@
       });
     });
     if (keys.indexOf('bac') >= 0) {
-      [['dt123', 'Điện toán một hai ba'], ['thantai', 'Thần tài']].forEach(function (x) {
+      [['dt123', 'Điện toán một hai ba'], ['thantai', 'Thần tài'], ['dt636', 'Điện toán sáu ba sáu']].forEach(function (x) {
         var a = (prev && prev[x[0]]) || [], b = (next && next[x[0]]) || [], fresh = [];
         b.forEach(function (v, i) { if (isSet(v) && !isSet(a[i])) fresh.push(v); });
         if (fresh.length) say(x[1] + ': ' + fresh.map(spell).join(', '));

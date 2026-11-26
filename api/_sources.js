@@ -108,24 +108,77 @@ function parseMinhNgoc(html, region, iso) {
   return null;
 }
 const filledOf = (r) => (r && r.provinces || []).reduce((s, p) => s + Object.values(p.prizes || {}).reduce((t, a) => t + a.length, 0), 0);
+/* ---- Điện toán 1*2*3, 6x36, Thần Tài 4, Vietlott Mega 6/45 & Power 6/55 (nằm cùng trang Miền Bắc của Minh Ngọc) ---- */
+// Lấy đoạn chữ ngay sau nhãn (vd "Kết quả xổ số Thần Tài 4"), cắt ở nhãn "Kết quả xổ số" kế tiếp
+function after(html, labelRe) {
+  const out = [];
+  html = decode(html).normalize('NFC');
+  const re = new RegExp(labelRe.source, 'gi');
+  let m;
+  while ((m = re.exec(html))) {
+    let seg = html.slice(m.index + m[0].length, m.index + m[0].length + 6000);
+    const cut = seg.search(/Kết\s+quả\s+xổ\s+số/i);
+    if (cut > 40) seg = seg.slice(0, cut);
+    out.push(text(seg));
+  }
+  return out;
+}
+const DATE_ANY = /(\d{2})\/(\d{2})\/(\d{4})/;
+function pickDaily(html, labelRe, iso, count, digits) {
+  for (const t of after(html, labelRe)) {
+    const dm = DATE_ANY.exec(t);
+    if (!dm || dm[3] + '-' + dm[2] + '-' + dm[1] !== iso) continue;   // chỉ nhận đúng ngày
+    const rest = t.slice(dm.index + dm[0].length).replace(/\d{1,2}:\d{2}/g, ' ');
+    const n = (rest.match(digits === 1 ? /\b\d\b/g : /\b\d{2}\b/g) || []).slice(0, count);
+    if (n.length === count) return n;
+  }
+  return null;
+}
+function pickVietlott(html, labelRe, count, max) {
+  for (const t of after(html, labelRe)) {
+    const dm = DATE_ANY.exec(t);
+    if (!dm) continue;
+    const ky = /#\s*0*(\d{3,6})/.exec(t);
+    const jps = (t.match(/Jackpot\s*\d?\s*:?\s*([\d.,]{6,})/gi) || []).map((x) => (/([\d.,]{6,})/.exec(x) || [])[1]);
+    const rest = t.replace(DATE_ANY, ' ').replace(/#\s*\d+/g, ' ').replace(/[\d.,]{6,}/g, ' ').replace(/\d{1,2}:\d{2}/g, ' ');
+    const n = (rest.match(/\b\d{2}\b/g) || []).filter((x) => +x >= 1 && +x <= max).slice(0, count);
+    if (n.length === count) {
+      return { date: dm[3] + '-' + dm[2] + '-' + dm[1], ky: ky ? ky[1].padStart(5, '0') : '', nums: n, jackpot: jps[0] || '', jackpot2: jps[1] || '' };
+    }
+  }
+  return null;
+}
+function parseExtras(html, iso) {
+  const x = {};
+  const a = pickDaily(html, /điện\s*toán\s*1\s*\*\s*2\s*\*\s*3/, iso, 6, 1); if (a) x.dt123 = a;
+  const b = pickDaily(html, /thần\s*tài\s*4?/, iso, 4, 1); if (b) x.thantai = b;
+  const c = pickDaily(html, /điện\s*toán\s*6\s*x\s*36/, iso, 6, 2); if (c) x.dt636 = c;
+  const mg = pickVietlott(html, /mega\s*6\s*[x\/]\s*45/, 6, 45); if (mg && mg.date <= iso) x.mega = mg;
+  const pw = pickVietlott(html, /power\s*6\s*[x\/]\s*55/, 7, 55); if (pw && pw.date <= iso) x.power = pw;
+  return x;
+}
 async function minhngoc(region, iso) {
   const d = iso.slice(8, 10) + '-' + iso.slice(5, 7) + '-' + iso.slice(0, 4);
   const urls = [];
   // Hôm nay: trang "xổ số trực tiếp" mới có số đang quay; trang theo ngày chỉ có số sau khi quay xong
   if (iso === vnToday()) urls.push('https://www.minhngoc.net.vn/xo-so-truc-tiep/' + MN_SLUG[region] + '.html');
   urls.push('https://www.minhngoc.net.vn/ket-qua-xo-so/' + MN_SLUG[region] + '/' + d + '.html');
-  let best = null, lastErr = null, sawPage = false;
+  let best = null, lastErr = null, sawPage = false, extras = {};
   for (const u of urls) {
     let html;
     try { html = await get(u); } catch (e) { lastErr = e; continue; }
     sawPage = true;
     const r = parseMinhNgoc(html, region, iso);
+    if (region === 'bac') extras = Object.assign(parseExtras(html, iso), extras);
     if (r && filledOf(r) > filledOf(best)) best = r;
     if (best && filledOf(best) >= PRIZES[region].reduce((s, x) => s + x[1], 0) * best.provinces.length) break; // đã đủ số
   }
-  if (best) return best;
+  if (region === 'bac' && !extras.power) {
+    try { const p = parseExtras(await get('https://www.minhngoc.net.vn/ket-qua-xo-so/dien-toan-vietlott.html'), iso); if (p.power) extras.power = p.power; if (!extras.mega && p.mega) extras.mega = p.mega; } catch { }
+  }
+  if (best) return Object.assign(best, { extras });
   if (!sawPage && lastErr) throw lastErr;
-  return { provinces: [], note: 'Minh Ngọc chưa có kết quả ngày ' + dmy(iso) };
+  return { provinces: [], extras, note: 'Minh Ngọc chưa có kết quả ngày ' + dmy(iso) };
 }
 
 /* ---------------- Nguồn 2: Xổ Số VN (API JSON) ---------------- */
@@ -214,6 +267,18 @@ function mergeRegion(doc, region, got) {
   return changed;
 }
 
+function mergeExtras(doc, x) {
+  let c = 0;
+  ['dt123', 'thantai', 'dt636'].forEach((k) => {
+    if (x[k] && JSON.stringify(x[k]) !== JSON.stringify(doc[k] || [])) { doc[k] = x[k]; c++; }
+  });
+  doc.vietlott = doc.vietlott || {};
+  ['mega', 'power'].forEach((k) => {
+    if (x[k] && JSON.stringify(x[k]) !== JSON.stringify(doc.vietlott[k] || null)) { doc.vietlott[k] = x[k]; c++; }
+  });
+  return c;
+}
+
 /* ---------------- Cấu hình nguồn ---------------- */
 export const SRC_DEFAULT = { mode: 'minhngoc', fallback: true };
 export async function getSrc() {
@@ -252,7 +317,8 @@ export async function syncDay(iso, opts = {}) {
   }));
   for (const { r, m, got, errs } of results) {
     if (!got) { report[r] = { ok: false, error: errs.join(' | ') }; continue; }
-    const c = mergeRegion(doc, r, got);
+    let c = mergeRegion(doc, r, got);
+    if (r === 'bac' && got.extras) c += mergeExtras(doc, got.extras);
     changed += c;
     const filled = (doc[r].provinces || []).reduce((s, p) => s + countFilled(p), 0);
     report[r] = { ok: true, source: m, provinces: (got.provinces || []).length, filled, changed: c, note: got.note || (errs.length ? 'Nguồn chính lỗi, đã dùng nguồn dự phòng: ' + errs.join(' | ') : '') };
@@ -293,6 +359,8 @@ function vnClock() {
 function regionDone(doc, r) {
   const ps = doc && doc[r] && doc[r].provinces;
   if (!ps || !ps.length) return false;
+  // Miền Bắc chỉ coi là xong khi có cả Điện toán 1*2*3 và Thần Tài
+  if (r === 'bac' && (((doc.dt123 || []).filter(Boolean).length < 6) || ((doc.thantai || []).filter(Boolean).length < 4))) return false;
   return ps.every((p) => PRIZES[r].every(([id, n]) => ((p.prizes && p.prizes[id]) || []).filter(Boolean).length >= n));
 }
 // Trả về danh sách miền cần lấy lúc này và khoảng nghỉ (giây)

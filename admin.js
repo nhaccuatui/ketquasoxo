@@ -74,7 +74,7 @@
       });
     });
     d.bac.kyhieu = d.bac.kyhieu || [];
-    d.dt123 = d.dt123 || []; d.thantai = d.thantai || [];
+    d.dt123 = d.dt123 || []; d.thantai = d.thantai || []; d.dt636 = d.dt636 || [];
     return d;
   }
   function status(t, bad) { var e = $('#status'); e.textContent = t; e.className = bad ? 'bad' : ''; }
@@ -122,6 +122,13 @@
       for (i = 0; i < 6; i++) h += inp('s', 'data-x="dt" data-i="' + i + '"', doc.dt123[i] || '', 1, '0');
       h += '<h3>Xổ Số Thần Tài (4 số)</h3>';
       for (i = 0; i < 4; i++) h += inp('s', 'data-x="tt" data-i="' + i + '"', doc.thantai[i] || '', 1, '0');
+      h += '<h3>Điện Toán 6x36 (6 số, mỗi số 2 chữ số – chỉ thứ Tư và thứ Bảy)</h3>';
+      for (i = 0; i < 6; i++) h += inp('s', 'data-x="d6" data-i="' + i + '"', doc.dt636[i] || '', 2, '00');
+      if (doc.vietlott && (doc.vietlott.mega || doc.vietlott.power)) {
+        h += '<h3>Vietlott (tự lấy từ Minh Ngọc)</h3><p class="hint">' + ['mega', 'power'].filter(function (k) { return doc.vietlott[k]; }).map(function (k) {
+          var v = doc.vietlott[k]; return (k === 'mega' ? 'Mega 6/45' : 'Power 6/55') + ' – kỳ #' + esc(v.ky) + ' (' + esc(v.date) + '): <b>' + esc(v.nums.join(' ')) + '</b>';
+        }).join('<br>') + '</p>';
+      }
       h += '</div>';
     }
     $('#grid').innerHTML = h;
@@ -140,6 +147,7 @@
     else if (ds.x === 'kh') put(doc.bac.kyhieu);
     else if (ds.x === 'dt') put(doc.dt123);
     else if (ds.x === 'tt') put(doc.thantai);
+    else if (ds.x === 'd6') put(doc.dt636);
     return v;
   }
   function numInputs() { return Array.prototype.slice.call(document.querySelectorAll('#grid input.n')); }

@@ -324,6 +324,23 @@
     });
     return h;
   }
+  // Vietlott: hiện kỳ quay gần nhất của Mega 6/45 và Power 6/55
+  function vietlottBox() {
+    var vl = (data && data.vietlott) || {};
+    function row(name, it, n) {
+      var h = '<div class="vl-row"><div class="vl-h"><b>' + name + '</b>';
+      if (it) h += '<span>Kỳ #' + esc(it.ky || '') + ' · ' + esc(String(it.date || '').split('-').reverse().join('/')) + '</span>';
+      h += '</div><div class="balls vl">';
+      for (var i = 0; i < n; i++) {
+        var v = it && it.nums && it.nums[i];
+        h += '<span class="ball v' + (i === 6 ? ' sp' : '') + '">' + (v ? esc(v) : waitIcon(false)) + '</span>';
+      }
+      h += '</div>';
+      if (it && it.jackpot) h += '<div class="vl-jp">Jackpot' + (it.jackpot2 ? ' 1' : '') + ': <b>' + esc(it.jackpot) + 'đ</b>' + (it.jackpot2 ? ' · Jackpot 2: <b>' + esc(it.jackpot2) + 'đ</b>' : '') + '</div>';
+      return h + '</div>';
+    }
+    return '<div class="sbox vietlott"><h3>Vietlott</h3>' + row('Mega 6/45', vl.mega, 6) + row('Power 6/55', vl.power, 7) + '</div>';
+  }
   function clockBlock() {
     return '<div class="clockp"><span class="clk-l">GIỜ VIỆT NAM</span><span class="clk">--:--:--</span></div>';
   }
@@ -358,7 +375,10 @@
           '<div class="sbox"><h3>Điện Toán 1*2*3</h3><div class="balls">' +
           balls(data && data.dt123, [1, 2, 3], function (g) { return 'g' + (g + 1); }) + '</div></div>' +
           '<div class="sbox thantai"><h3>Xổ Số Thần Tài</h3><div class="balls">' +
-          balls(data && data.thantai, [4], function () { return 't'; }) + '</div></div>' + clockBlock() + '</aside>';
+          balls(data && data.thantai, [4], function () { return 't'; }) + '</div></div>' +
+          (((data && data.dt636 && data.dt636.length) || V.wd === 3 || V.wd === 6) ?
+            '<div class="sbox"><h3>Điện Toán 6x36</h3><div class="balls">' + balls(data && data.dt636, [6], function () { return 'g1 sm'; }) + '</div></div>' : '') +
+          vietlottBox() + clockBlock() + '</aside>';
       }
       h += regionTable(tab, 'single') + '</div>';
     }
