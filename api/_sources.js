@@ -331,11 +331,13 @@ async function minhngoc(region, iso) {
   if (region === 'bac') {
     // Đọc từ các trang riêng của Minh Ngọc (rõ ràng, chính xác hơn trang trực tiếp Miền Bắc)
     const MN = 'https://www.minhngoc.net.vn/';
+    // Hôm nay: trang chính; ngày cũ: trang theo ngày (vd .../1*2*3/26-11-2026.html)
+    const dpath = iso === vnToday() ? '.html' : '/' + iso.slice(8, 10) + '-' + iso.slice(5, 7) + '-' + iso.slice(0, 4) + '.html';
     const jobs = [];
-    jobs.push(get(MN + 'xo-so-dien-toan/1*2*3.html').then((h) => { const v = pickByDate(h, iso, 6, 1); if (v) extras.dt123 = v; }));
-    jobs.push(get(MN + 'xo-so-dien-toan/than-tai-4.html').then((h) => { const v = pickByDate(h, iso, 4, 1); if (v) extras.thantai = v; }));
+    jobs.push(get(MN + 'xo-so-dien-toan/1*2*3' + dpath).then((h) => { const v = pickByDate(h, iso, 6, 1); if (v) extras.dt123 = v; }));
+    jobs.push(get(MN + 'xo-so-dien-toan/than-tai-4' + dpath).then((h) => { const v = pickByDate(h, iso, 4, 1); if (v) extras.thantai = v; }));
     const wd = new Date(iso + 'T00:00:00Z').getUTCDay();
-    if (wd === 3 || wd === 6) jobs.push(get(MN + 'xo-so-dien-toan/6x36.html').then((h) => { const v = pickByDate(h, iso, 6, 2); if (v) extras.dt636 = v; }));
+    if (wd === 3 || wd === 6) jobs.push(get(MN + 'xo-so-dien-toan/6x36' + dpath).then((h) => { const v = pickByDate(h, iso, 6, 2); if (v) extras.dt636 = v; }));
     // Vietlott: luôn lấy từ trang Vietlott riêng
     jobs.push(get(MN + 'ket-qua-xo-so/dien-toan-vietlott/mega-6x45.html').then((h) => { const v = vietlottPage(h, 6, 45, iso); if (v) extras.mega = v; }));
     jobs.push(get(MN + 'ket-qua-xo-so/dien-toan-vietlott/power-6x55.html').then((h) => { const v = vietlottPage(h, 7, 55, iso); if (v) extras.power = v; }));
@@ -538,6 +540,19 @@ export function dueRegions(doc) {
     else if (now > d + 45 && now <= 23 * 60 + 59) due.push([r, 120]); // quay xong mà chưa đủ số: 2 phút/lần
   }
   return due;
+}
+// Xem ngày cũ mà dữ liệu thiếu → tự lấy bổ sung từ nguồn (tối đa 10 phút/lần cho mỗi ngày, chỉ 60 ngày gần nhất)
+export async function autoSyncPast(iso, doc) {
+  const today = vnToday();
+  if (!(iso < today)) return null;
+  const limit = new Date(today + 'T00:00:00Z'); limit.setUTCDate(limit.getUTCDate() - 60);
+  if (iso < limit.toISOString().slice(0, 10)) return null;
+  const missing = REGIONS.filter((r) => !regionDone(doc, r));
+  if (!missing.length) return null;
+  if ((await redis('SET', K.lock('day:' + iso), '1', 'NX', 'EX', '600')) !== 'OK') return null;
+  const cfg = await getSrc();
+  if (!FETCHERS[cfg.mode]) return null;
+  return syncDay(iso, { cfg, regions: missing, doc: doc ? JSON.parse(JSON.stringify(doc)) : null });
 }
 export async function autoSync(iso, doc) {
   if (iso !== vnToday()) return null;

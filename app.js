@@ -173,6 +173,7 @@
     if (s.complete && s.any) return 'done';
     if (!V.isToday) return s.any ? 'done' : 'nodata';
     if (nowSecs() < drawSecs(key) && !s.any) return 'waiting';
+    if (!s.any && nowSecs() > drawSecs(key) + 2700) return 'nodata'; // quá giờ quay 45 phút mà chưa có số
     return 'drawing';
   }
 
@@ -425,6 +426,7 @@
     updateCountdownOverlay();
     var iso = viewDate().iso;
     if (lastIso && iso !== lastIso && !dateParam) { data = null; dataSig = ''; }
+    if (iso !== lastIso) syncDatebar();
     lastIso = iso;
     var sig = iso + '|' + ['nam', 'trung', 'bac'].map(status).join(',') + '|' + tab;
     if (lastSig && sig !== lastSig) { lastSig = sig; if (!dateParam) { dataSig = ''; load(); } render(); return; }
@@ -524,8 +526,41 @@
     document.body.appendChild(b);
   }
 
+  /* ---------- Chọn ngày xem kết quả (đầu trang) ---------- */
+  function todayIso() { var n = vnNow(); return n.y + '-' + pad(n.m) + '-' + pad(n.d); }
+  function setDate(iso) {
+    var t = todayIso();
+    if (iso && iso > t) iso = t;
+    dateParam = (iso && iso !== t) ? iso : null;
+    var p = new URLSearchParams(location.search);
+    if (dateParam) p.set('date', dateParam); else p.delete('date');
+    history.replaceState(null, '', '?' + p.toString());
+    data = null; dataSig = ''; loaded = false; lastIso = '';
+    syncDatebar(); render(); load();
+  }
+  function syncDatebar() {
+    var inp = $('#pick-date'); if (!inp) return;
+    inp.max = todayIso();
+    inp.value = dateParam || viewDate().iso;
+    var tb = $('#pick-today'); if (tb) tb.classList.toggle('on', !dateParam);
+    var nx = $('#pick-next'); if (nx) nx.disabled = !dateParam;
+  }
+  function shiftDay(n) {
+    var cur = (dateParam || viewDate().iso).split('-').map(Number);
+    var d = new Date(Date.UTC(cur[0], cur[1] - 1, cur[2] + n));
+    setDate(d.toISOString().slice(0, 10));
+  }
+  function initDatebar() {
+    var inp = $('#pick-date'); if (!inp) return;
+    inp.addEventListener('change', function () { if (/^\d{4}-\d{2}-\d{2}$/.test(inp.value)) setDate(inp.value); });
+    $('#pick-prev').addEventListener('click', function () { shiftDay(-1); });
+    $('#pick-next').addEventListener('click', function () { shiftDay(1); });
+    $('#pick-today').addEventListener('click', function () { setDate(null); });
+    syncDatebar();
+  }
+
   /* ---------- Tự tải lại trang khi có bản cập nhật mới (cửa sổ OBS mở cả ngày vẫn chạy bản mới nhất) ---------- */
-  var APP_VER = '2026-11-26-5';
+  var APP_VER = '2026-11-26-6';
   function checkVersion() {
     fetch('version.json?_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && j.v && j.v !== APP_VER) location.reload();
@@ -553,6 +588,7 @@
     });
     window.addEventListener('resize', fit);
     document.addEventListener('fullscreenchange', function () { setTimeout(fit, 50); });
+    initDatebar();
     render(); fit(); pollLoop(); loadSite();
     setInterval(tick, 1000);
     setInterval(checkVersion, 60000);
