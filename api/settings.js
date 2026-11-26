@@ -21,6 +21,9 @@ function clean(patch, cur) {
     }
     out.drawTime = Object.assign({}, cur.drawTime || {}, dt);
   }
+  for (const k of ['ballColor', 'ballSpColor']) {
+    if (patch[k] !== undefined && /^#[0-9a-f]{6}$/i.test(String(patch[k]))) out[k] = String(patch[k]);
+  }
   if (patch.wmOpacity !== undefined) out.wmOpacity = num(patch.wmOpacity, 0.45, 0, 0.5);
   if (patch.ticker && typeof patch.ticker === 'object') {
     const t = patch.ticker, text = str(t.text, 300);

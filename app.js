@@ -71,6 +71,11 @@
     }
     if (f2) f2.textContent = SITE.footer2;
     buildWatermark();
+    var st = $('#stage');
+    if (st) {
+      st.style.setProperty('--ball-ink', /^#[0-9a-f]{6}$/i.test(SITE.ballColor || '') ? SITE.ballColor : '#2b2d33');
+      st.style.setProperty('--ball-sp-ink', /^#[0-9a-f]{6}$/i.test(SITE.ballSpColor || '') ? SITE.ballSpColor : '#ffffff');
+    }
     if (!first) render();
     document.dispatchEvent(new CustomEvent('kqxs:settings', { detail: SITE }));
   }
@@ -520,7 +525,7 @@
   }
 
   /* ---------- Tự tải lại trang khi có bản cập nhật mới (cửa sổ OBS mở cả ngày vẫn chạy bản mới nhất) ---------- */
-  var APP_VER = '2026-11-26-2';
+  var APP_VER = '2026-11-26-3';
   function checkVersion() {
     fetch('version.json?_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && j.v && j.v !== APP_VER) location.reload();

@@ -230,6 +230,7 @@
     var o = val('wmOpacity'); $('#s-wmOpacity').value = o != null ? o : 0.45; $('#s-wmv').textContent = (+$('#s-wmOpacity').value).toFixed(2);
     preview();
     $('#ro-time').value = val('rollover') || '14:00';
+    $('#bc-ink').value = site.ballColor || '#2b2d33'; $('#bc-sp').value = site.ballSpColor || '#ffffff'; bcPreview();
     var dtv = Object.assign({}, CFG.drawTime || {}, site.drawTime || {});
     ['nam', 'trung', 'bac'].forEach(function (k) { $('#dt-' + k).value = dtv[k] || ''; });
     roNow();
@@ -291,6 +292,17 @@
     if (!/^\d{2}:\d{2}$/.test(v)) { msg('#ro-msg', 'Chọn giờ hợp lệ (vd 14:00).', true); return; }
     saveSite({ rollover: v }, '#ro-msg', 'Đã lưu ✓ Trang chủ áp dụng sau khoảng 15 giây.').catch(function () { });
   });
+  function bcPreview() {
+    var g = 'radial-gradient(circle at 34% 28%,#fff 0%,#f3f4f6 18%,#d4d6db 52%,#a9acb4 82%,#8b8e97 100%)';
+    var r = 'radial-gradient(circle at 34% 28%,#ffd6d6 0%,#f59a9a 20%,#e2565a 55%,#c4343a 82%,#a3242a 100%)';
+    function ball(bg, c, n) { return '<span style="width:48px;height:48px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:800 22px Arial;background:' + bg + ';color:' + c + ';box-shadow:0 3px 6px rgba(0,0,0,.25)">' + n + '</span>'; }
+    $('#bc-pv').innerHTML = ball(g, $('#bc-ink').value, '14') + ball(g, $('#bc-ink').value, '28') + ball(r, $('#bc-sp').value, '32');
+  }
+  $('#bc-ink').addEventListener('input', bcPreview); $('#bc-sp').addEventListener('input', bcPreview);
+  $('#bc-save').addEventListener('click', function () {
+    saveSite({ ballColor: $('#bc-ink').value, ballSpColor: $('#bc-sp').value }, '#bc-msg', 'Đã lưu ✓ Trang chủ đổi màu sau khoảng 15 giây.').catch(function () { });
+  });
+  $('#bc-def').addEventListener('click', function () { $('#bc-ink').value = '#2b2d33'; $('#bc-sp').value = '#ffffff'; bcPreview(); msg('#bc-msg', 'Bấm "Lưu màu số" để áp dụng.'); });
   $('#dt-save').addEventListener('click', function () {
     var dt = {}; ['nam', 'trung', 'bac'].forEach(function (k) { dt[k] = $('#dt-' + k).value; });
     if (!/^\d{2}:\d{2}$/.test(dt.nam + '') || !/^\d{2}:\d{2}$/.test(dt.trung + '') || !/^\d{2}:\d{2}$/.test(dt.bac + '')) { msg('#dt-msg', 'Chọn đủ giờ cho 3 miền.', true); return; }

@@ -645,3 +645,12 @@ body.prep-nam .tbl.nam .wait,body.prep-trung .tbl.trung .wait,body.prep-bac .tbl
 .ball.t,.sbox .ball.t{background:#fff!important;color:#078701!important;border:6px solid #078701!important;
   box-shadow:0 0 0 5px rgba(7,135,1,.14),inset 0 -6px 0 rgba(7,135,1,.10)}
 .ball.t .wait{border-color:#7cc47a}
+/* v23: bóng số 3D (Điện toán 1*2*3, Thần Tài, 6x36, Vietlott) – màu số chỉnh trong admin */
+#stage{--ball-ink:#2b2d33;--ball-sp-ink:#ffffff}
+.sbox .ball,.sbox .ball.g1,.sbox .ball.g2,.sbox .ball.g3,.sbox .ball.t,.sbox .ball.v,.sbox .ball.sm{
+  background:radial-gradient(circle at 34% 28%,#ffffff 0%,#f3f4f6 18%,#d4d6db 52%,#a9acb4 82%,#8b8e97 100%)!important;
+  color:var(--ball-ink)!important;border:0!important;text-shadow:0 2px 0 rgba(255,255,255,.55)!important;
+  box-shadow:0 8px 14px rgba(0,0,0,.28),inset 0 -8px 14px rgba(0,0,0,.12)!important;font-weight:800}
+.sbox .ball.v.sp{background:radial-gradient(circle at 34% 28%,#ffd6d6 0%,#f59a9a 20%,#e2565a 55%,#c4343a 82%,#a3242a 100%)!important;
+  color:var(--ball-sp-ink)!important;text-shadow:0 2px 2px rgba(0,0,0,.35)!important}
+.sbox .ball .wait{border-color:#8b8e97!important}
