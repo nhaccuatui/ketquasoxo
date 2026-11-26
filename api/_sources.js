@@ -163,6 +163,25 @@ function parseTableGeneric(html, region, iso) {
   }
   return null;
 }
+export async function debugExtras(iso) {
+  const MN = 'https://www.minhngoc.net.vn/';
+  const list = [['Điện toán 1*2*3', 'xo-so-dien-toan/1*2*3.html', (h) => pickByDate(h, iso, 6, 1)],
+    ['Thần Tài 4', 'xo-so-dien-toan/than-tai-4.html', (h) => pickByDate(h, iso, 4, 1)],
+    ['Điện toán 6x36', 'xo-so-dien-toan/6x36.html', (h) => pickByDate(h, iso, 6, 2)],
+    ['Mega 6/45', 'ket-qua-xo-so/dien-toan-vietlott/mega-6x45.html', (h) => vietlottPage(h, 6, 45, iso)],
+    ['Power 6/55', 'ket-qua-xo-so/dien-toan-vietlott/power-6x55.html', (h) => vietlottPage(h, 7, 55, iso)]];
+  return Promise.all(list.map(async ([name, path, fn]) => {
+    const o = { name, url: MN + path };
+    try {
+      const r = await fetch(MN + path, { headers: { 'User-Agent': UA, Accept: 'text/html', 'Accept-Language': 'vi-VN,vi;q=0.9' }, cache: 'no-store' });
+      o.status = r.status; const h = await r.text(); o.bytes = h.length;
+      o.result = fn(h);
+      const t = text(decode(h)); const at = t.search(/Mở thưởng|Kỳ vé|NGÀY/i);
+      o.text = t.slice(Math.max(0, at), Math.max(0, at) + 400);
+    } catch (e) { o.error = e.message; }
+    return o;
+  }));
+}
 // Chẩn đoán: máy chủ nhận được gì từ Minh Ngọc (để sửa nhanh khi đọc không được)
 export async function debugMinhNgoc(region, iso) {
   const url = iso === vnToday() ? 'https://www.minhngoc.net.vn/xo-so-truc-tiep/' + MN_SLUG[region] + '.html'
@@ -207,36 +226,63 @@ function pickDaily(html, labelRe, iso, count, digits) {
   for (const t of after(html, labelRe)) {
     const dm = DATE_ANY.exec(t);
     if (!dm || dm[3] + '-' + dm[2] + '-' + dm[1] !== iso) continue;   // chỉ nhận đúng ngày
-    const rest = t.slice(dm.index + dm[0].length).replace(/\d{1,2}:\d{2}/g, ' ');
-    const n = (rest.match(digits === 1 ? /\b\d\b/g : /\b\d{2}\b/g) || []).slice(0, count);
+    const rest = clean(t.slice(dm.index + dm[0].length));
+    const n = digits === 1 ? (rest.match(/\b\d{1,6}\b/g) || []).join('').split('').slice(0, count) : (rest.match(/\b\d{2}\b/g) || []).slice(0, count);
     if (n.length === count) return n;
   }
   return null;
 }
+// Bỏ giờ (18:05 / 18:05:00), ngày (25/11/2026), số tiền (22,004,635,500) khỏi đoạn chữ trước khi lấy số
+function clean(t) {
+  return String(t).replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, ' ').replace(/\d{1,2}:\d{2}(?::\d{2})?/g, ' ')
+    .replace(/#\s*\d+/g, ' ').replace(/\d{1,3}(?:[.,]\d{3})+/g, ' ');
+}
+// Đọc 1 khối Vietlott: ngày, kỳ vé, rồi các số nằm SAU kỳ vé
+function vietlottFromText(t, count, max) {
+  const ky = /#\s*0*(\d{3,6})/.exec(t);
+  const dm = DATE_ANY.exec(t);
+  if (!ky || !dm) return null;
+  const after = clean(t.slice(ky.index + ky[0].length));
+  const n = (after.match(/\b\d{2}\b/g) || []).filter((x) => +x >= 1 && +x <= max).slice(0, count);
+  if (n.length !== count) return null;
+  // Tiền Jackpot: số tiền lớn đầu tiên trong 80 ký tự sau mỗi chữ "Jackpot"
+  const tail = t.slice(ky.index), jps = [];
+  const jre = /Jackpot/gi; let jm;
+  while ((jm = jre.exec(tail))) { const a = /(\d{1,3}(?:[.,]\d{3}){2,})/.exec(tail.slice(jm.index, jm.index + 80)); if (a && !jps.includes(a[1])) jps.push(a[1]); }
+  return { date: dm[3] + '-' + dm[2] + '-' + dm[1], ky: ky[1].padStart(5, '0'), nums: n, jackpot: jps[0] || '', jackpot2: jps[1] || '' };
+}
 function pickVietlott(html, labelRe, count, max) {
   for (const t of after(html, labelRe)) {
-    const dm = DATE_ANY.exec(t);
-    if (!dm) continue;
-    const ky = /#\s*0*(\d{3,6})/.exec(t);
-    const jps = (t.match(/Jackpot\s*\d?\s*:?\s*([\d.,]{6,})/gi) || []).map((x) => (/([\d.,]{6,})/.exec(x) || [])[1]);
-    const rest = t.replace(DATE_ANY, ' ').replace(/#\s*\d+/g, ' ').replace(/[\d.,]{6,}/g, ' ').replace(/\d{1,2}:\d{2}/g, ' ');
-    const n = (rest.match(/\b\d{2}\b/g) || []).filter((x) => +x >= 1 && +x <= max).slice(0, count);
-    if (n.length === count) {
-      return { date: dm[3] + '-' + dm[2] + '-' + dm[1], ky: ky ? ky[1].padStart(5, '0') : '', nums: n, jackpot: jps[0] || '', jackpot2: jps[1] || '' };
-    }
+    const r = vietlottFromText(t, count, max);
+    if (r) return r;
+  }
+  return null;
+}
+// Trang riêng Mega / Power: khối đầu tiên là kỳ mới nhất
+function vietlottPage(html, count, max, iso) {
+  const t = text(decode(html)).normalize('NFC');
+  const re = /#\s*0*\d{3,6}/g; let m; const kys = [];
+  while ((m = re.exec(t))) kys.push(m.index);
+  for (let i = 0; i < kys.length; i++) {
+    const start = Math.max(0, kys[i] - 500), end = i + 1 < kys.length ? kys[i + 1] : kys[i] + 1500;
+    const blk = t.slice(start, end);
+    const lastDate = [...blk.slice(0, kys[i] - start).matchAll(/(\d{2})\/(\d{2})\/(\d{4})/g)].pop();
+    if (!lastDate) continue;
+    const r = vietlottFromText(lastDate[0] + ' ' + blk.slice(kys[i] - start), count, max);
+    if (r && r.date <= iso) return r;
   }
   return null;
 }
 // Trang riêng của từng loại: "Mở thưởng Thứ năm ngày 26/11/2026" rồi tới các số; lấy đúng hộp của ngày cần lấy
 function pickByDate(html, iso, count, digits) {
   const t = text(decode(html)).normalize('NFC');
-  const re = /ngày\s+(\d{1,2})\/(\d{1,2})\/(\d{4})/gi;
+  const re = /ngày\s*:?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/gi;
   const marks = []; let m;
   while ((m = re.exec(t))) marks.push({ i: m.index, end: m.index + m[0].length, iso: m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') });
   for (let k = 0; k < marks.length; k++) {
     if (marks[k].iso !== iso) continue;
     const stop = k + 1 < marks.length ? marks[k + 1].i : marks[k].end + 600;
-    const seg = t.slice(marks[k].end, Math.min(stop, marks[k].end + 600)).replace(/\d{1,2}:\d{2}/g, ' ');
+    const seg = clean(t.slice(marks[k].end, Math.min(stop, marks[k].end + 600)));
     // Số 1 chữ số có thể viết rời "8 3 4 1 9 5" hoặc gộp "8 34 195" → tách thành từng chữ số
     const n = digits === 1 ? (seg.match(/\b\d{1,6}\b/g) || []).join('').split('').slice(0, count)
       : (seg.match(/\b\d{2}\b/g) || []).slice(0, count);
@@ -275,12 +321,13 @@ async function minhngoc(region, iso) {
     // Đọc từ các trang riêng của Minh Ngọc (rõ ràng, chính xác hơn trang trực tiếp Miền Bắc)
     const MN = 'https://www.minhngoc.net.vn/';
     const jobs = [];
-    if (!extras.dt123) jobs.push(get(MN + 'xo-so-dien-toan/1*2*3.html').then((h) => { const v = pickByDate(h, iso, 6, 1); if (v) extras.dt123 = v; }));
-    if (!extras.thantai) jobs.push(get(MN + 'xo-so-dien-toan/than-tai-4.html').then((h) => { const v = pickByDate(h, iso, 4, 1); if (v) extras.thantai = v; }));
+    jobs.push(get(MN + 'xo-so-dien-toan/1*2*3.html').then((h) => { const v = pickByDate(h, iso, 6, 1); if (v) extras.dt123 = v; }));
+    jobs.push(get(MN + 'xo-so-dien-toan/than-tai-4.html').then((h) => { const v = pickByDate(h, iso, 4, 1); if (v) extras.thantai = v; }));
     const wd = new Date(iso + 'T00:00:00Z').getUTCDay();
-    if (!extras.dt636 && (wd === 3 || wd === 6)) jobs.push(get(MN + 'xo-so-dien-toan/6x36.html').then((h) => { const v = pickByDate(h, iso, 6, 2); if (v) extras.dt636 = v; }));
+    if (wd === 3 || wd === 6) jobs.push(get(MN + 'xo-so-dien-toan/6x36.html').then((h) => { const v = pickByDate(h, iso, 6, 2); if (v) extras.dt636 = v; }));
     // Vietlott: luôn lấy từ trang Vietlott riêng
-    jobs.push(get(MN + 'ket-qua-xo-so/dien-toan-vietlott.html').then((h) => { const p = parseExtras(h, iso); if (p.power) extras.power = p.power; if (p.mega) extras.mega = p.mega; }));
+    jobs.push(get(MN + 'ket-qua-xo-so/dien-toan-vietlott/mega-6x45.html').then((h) => { const v = vietlottPage(h, 6, 45, iso); if (v) extras.mega = v; }));
+    jobs.push(get(MN + 'ket-qua-xo-so/dien-toan-vietlott/power-6x55.html').then((h) => { const v = vietlottPage(h, 7, 55, iso); if (v) extras.power = v; }));
     await Promise.all(jobs.map((j) => j.catch(() => { })));
   }
   if (best) return Object.assign(best, { extras });

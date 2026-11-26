@@ -603,7 +603,11 @@
         '<b>Kết nối:</b> ' + (d.error ? '<b style="color:#d70f28">lỗi – ' + esc(d.error) + '</b>' : 'mã ' + esc(d.status) + ', ' + esc(d.bytes) + ' ký tự') + '<br>' +
         '<b>Có ngày ' + esc(date.split('-').reverse().join('/')) + ' trong trang:</b> ' + (d.hasDate ? 'có' : '<b style="color:#d70f28">không</b>') + '<br>' +
         '<b>Cách đọc 1:</b> ' + (d.classParser ? 'được ✓' : 'không') + ' · <b>Cách đọc 2:</b> ' + (d.tableParser ? 'được ✓' : 'không') + '<br>' +
-        '<b>Chữ gần ngày quay:</b><br>' + esc(d.textNearDate || '');
+        '<b>Chữ gần ngày quay:</b><br>' + esc(d.textNearDate || '') +
+        (j.out.extras ? '<br><br><b>Điện toán &amp; Vietlott (trang riêng của Minh Ngọc):</b><br>' + j.out.extras.map(function (x) {
+          var v = x.result, nums = v ? (v.nums || v).join(' ') + (v.ky ? ' (kỳ #' + v.ky + ', ' + v.date.split('-').reverse().join('/') + ')' : '') : '';
+          return '• ' + esc(x.name) + ': ' + (x.error ? '<b style="color:#d70f28">lỗi kết nối – ' + esc(x.error) + '</b>' : (v ? '<b style="color:#1f9d4d">' + esc(nums) + '</b>' : '<b style="color:#d70f28">chưa đọc được</b> (mã ' + esc(x.status) + ')'));
+        }).join('<br>') : '');
       dbgText = JSON.stringify(j, null, 1); $('#dbg-copy').hidden = false;
     }).catch(function (e) { msg('#dbg-msg', 'Lỗi: ' + e.message, true); });
   });

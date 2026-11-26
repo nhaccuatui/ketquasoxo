@@ -525,7 +525,7 @@
   }
 
   /* ---------- Tự tải lại trang khi có bản cập nhật mới (cửa sổ OBS mở cả ngày vẫn chạy bản mới nhất) ---------- */
-  var APP_VER = '2026-11-26-3';
+  var APP_VER = '2026-11-26-4';
   function checkVersion() {
     fetch('version.json?_=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && j.v && j.v !== APP_VER) location.reload();
