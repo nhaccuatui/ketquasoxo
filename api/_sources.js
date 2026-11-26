@@ -41,11 +41,22 @@ export function slug(s) {
 
 /* ---------------- Tiện ích ---------------- */
 const dmy = (iso) => iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);
+// Giải mã ký tự HTML: &#7871; &#x1EBF; &agrave; &ecirc; ... (trang cũ hay viết tiếng Việt kiểu này)
+const NAMED = { nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', ndash: '–', mdash: '—', hellip: '…', laquo: '«', raquo: '»', middot: '·' };
+(() => {
+  const L = ['Agrave', 'Aacute', 'Acirc', 'Atilde', 'Auml', 'Aring', 'AElig', 'Ccedil', 'Egrave', 'Eacute', 'Ecirc', 'Euml', 'Igrave', 'Iacute', 'Icirc', 'Iuml',
+    'ETH', 'Ntilde', 'Ograve', 'Oacute', 'Ocirc', 'Otilde', 'Ouml', 'times', 'Oslash', 'Ugrave', 'Uacute', 'Ucirc', 'Uuml', 'Yacute', 'THORN', 'szlig'];
+  L.forEach((n, i) => { NAMED[n] = String.fromCharCode(192 + i); });
+  L.forEach((n, i) => { const c = String.fromCharCode(224 + i); if (n === 'times') NAMED.divide = '÷'; else if (n === 'szlig') NAMED.yuml = 'ÿ'; else NAMED[n.toLowerCase()] = c; });
+})();
 function decode(s) {
-  return String(s).replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n))
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  return String(s)
+    .replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (m, n) => String.fromCodePoint(+n))
+    .replace(/&([a-zA-Z]+);/g, (m, n) => (NAMED[n] !== undefined ? NAMED[n] : m))
+    .normalize('NFC');
 }
-const text = (h) => decode(String(h || '').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+const text = (h) => decode(String(h || '').replace(/<(script|style|noscript)[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
 const nums = (h, len) => (text(h).match(/\d+/g) || []).filter((x) => !len || x.length === len);
 async function get(url, json) {
   const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 8000);
