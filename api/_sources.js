@@ -24,7 +24,7 @@ const SCHEDULE = [
   { nam: ['Vĩnh Long', 'Bình Dương', 'Trà Vinh'], trung: ['Gia Lai', 'Ninh Thuận'], bac: ['Hải Phòng'] },
   { nam: ['TP. HCM', 'Long An', 'Bình Phước', 'Hậu Giang'], trung: ['Đà Nẵng', 'Quảng Ngãi', 'Đắk Nông'], bac: ['Nam Định'] }
 ];
-const DRAW = { nam: [16, 15], trung: [17, 15], bac: [18, 15] };
+const DRAW = { nam: [16, 10], trung: [17, 10], bac: [18, 10] };
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36';
 
 /* ---------------- Tên tỉnh: so khớp không dấu ---------------- */
@@ -450,7 +450,7 @@ export function dueRegions(doc) {
   for (const r of REGIONS) {
     if (regionDone(doc, r)) continue;
     const d = DRAW[r][0] * 60 + DRAW[r][1];
-    if (now >= d - 2 && now <= d + 45) due.push([r, 6]);          // đang quay: 6 giây/lần
+    if (now >= d - 5 && now <= d + 50) due.push([r, 5]);          // đang quay: 6 giây/lần
     else if (now > d + 45 && now <= 23 * 60 + 59) due.push([r, 120]); // quay xong mà chưa đủ số: 2 phút/lần
   }
   return due;

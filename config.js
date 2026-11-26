@@ -30,7 +30,7 @@ window.KQXS_CONFIG = {
 
   // Giờ bắt đầu quay thưởng (giờ Việt Nam). Sửa nếu đài đổi lịch.
   rolloverHour: 14,   // chỉ dùng khi admin chưa cài giờ chuyển ngày
-  drawTime: { nam: '16:15', trung: '17:15', bac: '18:15' },
+  drawTime: { nam: '16:10', trung: '17:10', bac: '18:10' },   // giờ bắt đầu trực tiếp; sửa trong admin, mục 2
 
   // Nguồn lấy kết quả tự động (Minh Ngọc / Xổ Số VN) chọn trong trang admin, mục 7.
 

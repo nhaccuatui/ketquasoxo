@@ -87,13 +87,24 @@
   }
 
   /* ---------- Thời gian (luôn theo giờ Việt Nam) ---------- */
+  // Đồng hồ theo giờ máy chủ (không phụ thuộc đồng hồ máy người xem bị lệch)
+  var clockOffset = 0;
+  function syncClock(r, t0) {
+    try {
+      var d = Date.parse(r.headers.get('date') || ''); if (isNaN(d)) return;
+      var age = +(r.headers.get('age') || 0) || 0, t1 = Date.now();
+      var off = d + age * 1000 + 500 - (t0 + t1) / 2;   // header Date chỉ chính xác tới giây
+      if (Math.abs(off) > 1500 && t1 - t0 < 3000) clockOffset = off;
+    } catch (e) { }
+  }
+  function drawTimeOf(key) { var t = (SITE.drawTime && SITE.drawTime[key]) || CFG.drawTime[key]; return /^\d{1,2}:\d{2}$/.test(t) ? t : CFG.drawTime[key]; }
   function vnNow() {
     var f = new Intl.DateTimeFormat('en-GB', {
       timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', weekday: 'short'
     });
     var o = {};
-    f.formatToParts(new Date()).forEach(function (p) { o[p.type] = p.value; });
+    f.formatToParts(new Date(Date.now() + clockOffset)).forEach(function (p) { o[p.type] = p.value; });
     return {
       y: +o.year, m: +o.month, d: +o.day, h: +o.hour, mi: +o.minute, s: +o.second,
       wd: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(o.weekday)
@@ -123,9 +134,9 @@
       wd: wd, wdShort: WD_SHORT[wd], wdFull: WD_FULL[wd], isToday: isToday
     };
   }
-  function drawSecs(key) { var t = CFG.drawTime[key].split(':'); return (+t[0]) * 3600 + (+t[1]) * 60; }
+  function drawSecs(key) { var t = drawTimeOf(key).split(':'); return (+t[0]) * 3600 + (+t[1]) * 60; }
   function nowSecs() { var n = vnNow(); return n.h * 3600 + n.mi * 60 + n.s; }
-  function hLabel(key) { var t = CFG.drawTime[key].split(':'); return t[0] + 'h' + t[1]; }
+  function hLabel(key) { var t = drawTimeOf(key).split(':'); return t[0] + 'h' + t[1]; }
   function hmmss(sec) {
     sec = Math.max(0, sec);
     return pad(Math.floor(sec / 3600)) + ':' + pad(Math.floor(sec % 3600 / 60)) + ':' + pad(sec % 60);
@@ -163,7 +174,9 @@
   var loaded = false, lastIso = '', embedIso = '';
   function fetchFirst(urls, i, allMissing) {
     if (i >= urls.length) { var e = new Error('no data'); e.allMissing = allMissing; return Promise.reject(e); }
+    var t0 = Date.now();
     return fetch(urls[i], { cache: 'no-store' }).then(function (r) {
+      syncClock(r, t0);
       if (!r.ok) { var er = new Error('HTTP ' + r.status); er.status = r.status; throw er; }
       return r.json();
     }).catch(function (er) { return fetchFirst(urls, i + 1, allMissing && er.status === 404); });
@@ -409,7 +422,7 @@
     var sig = keys.join(',');
     if (sig !== cdSig) {
       cdSig = sig;
-      var sub = keys.map(function (k) { return '<span class="cs"><span class="cn">' + esc(REG[k].short) + '</span> <b class="ct ' + k + '">' + CFG.drawTime[k].replace(':', 'h') + '</b></span>'; }).join('');
+      var sub = keys.map(function (k) { return '<span class="cs"><span class="cn">' + esc(REG[k].short) + '</span> <b class="ct ' + k + '">' + drawTimeOf(k).replace(':', 'h') + '</b></span>'; }).join('');
       el.innerHTML = '<div class="cd-card"><div class="cd-top"><img class="vang" src="img/vang.png" alt="" width="75" height="65">' + LIVE_SVG + '<span>SẮP QUAY THƯỞNG</span><img class="vang" src="img/vang.png" alt="" width="75" height="65"></div>' +
         '<div class="cd-big"><span class="cd-l">Còn</span> <b id="cd-time">--:--:--</b></div><div class="cd-sub">' + sub + '</div></div>';
     }

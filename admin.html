@@ -146,7 +146,22 @@ table.mt{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
           <span class="msg" id="ro-msg" role="status"></span>
         </div>
         <p class="hint" id="ro-now" style="margin-top:10px"></p>
-        <p class="hint">Giờ quay: Miền Nam 16:15 · Miền Trung 17:15 · Miền Bắc 18:15. Nên đặt trước 16:15 để kịp hiện đếm ngược.</p>
+        <p class="hint">Nên đặt trước giờ quay Miền Nam để người xem kịp thấy bảng đếm ngược.</p>
+      </div>
+      <div class="card">
+        <h2>Giờ bắt đầu quay (trực tiếp) từng miền</h2>
+        <p class="d">Bảng đếm ngược đếm tới giờ này, tự ẩn trước 1 phút, rồi chuyển sang <b>ĐANG QUAY THƯỞNG</b> và hiện số chạy. Mặc định 16:10 / 17:10 / 18:10 (giờ các trang trực tiếp bắt đầu tường thuật).</p>
+        <div class="bar">
+          <label style="font-weight:700">Miền Nam <input id="dt-nam" type="time" step="60"></label>
+          <label style="font-weight:700">Miền Trung <input id="dt-trung" type="time" step="60"></label>
+          <label style="font-weight:700">Miền Bắc <input id="dt-bac" type="time" step="60"></label>
+        </div>
+        <div class="bar" style="margin-top:10px">
+          <button type="button" class="pri" id="dt-save">Lưu giờ quay</button>
+          <button type="button" id="dt-def">Đặt lại 16:10 / 17:10 / 18:10</button>
+          <span class="msg" id="dt-msg" role="status"></span>
+        </div>
+        <p class="hint" style="margin-top:8px">Đồng hồ trên trang chạy theo giờ máy chủ, nên máy người xem có bị lệch giờ thì đếm ngược vẫn đúng.</p>
       </div>
       <div class="card">
         <h2>Giao diện &amp; nội dung</h2>

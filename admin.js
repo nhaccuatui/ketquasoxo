@@ -230,6 +230,8 @@
     var o = val('wmOpacity'); $('#s-wmOpacity').value = o != null ? o : 0.45; $('#s-wmv').textContent = (+$('#s-wmOpacity').value).toFixed(2);
     preview();
     $('#ro-time').value = val('rollover') || '14:00';
+    var dtv = Object.assign({}, CFG.drawTime || {}, site.drawTime || {});
+    ['nam', 'trung', 'bac'].forEach(function (k) { $('#dt-' + k).value = dtv[k] || ''; });
     roNow();
     var t = site.ticker || DEF.ticker || {};
     $('#t-text').value = t.text || '';
@@ -288,6 +290,15 @@
     var v = $('#ro-time').value;
     if (!/^\d{2}:\d{2}$/.test(v)) { msg('#ro-msg', 'Chọn giờ hợp lệ (vd 14:00).', true); return; }
     saveSite({ rollover: v }, '#ro-msg', 'Đã lưu ✓ Trang chủ áp dụng sau khoảng 15 giây.').catch(function () { });
+  });
+  $('#dt-save').addEventListener('click', function () {
+    var dt = {}; ['nam', 'trung', 'bac'].forEach(function (k) { dt[k] = $('#dt-' + k).value; });
+    if (!/^\d{2}:\d{2}$/.test(dt.nam + '') || !/^\d{2}:\d{2}$/.test(dt.trung + '') || !/^\d{2}:\d{2}$/.test(dt.bac + '')) { msg('#dt-msg', 'Chọn đủ giờ cho 3 miền.', true); return; }
+    saveSite({ drawTime: dt }, '#dt-msg', 'Đã lưu ✓ Trang chủ áp dụng sau khoảng 15 giây.').catch(function () { });
+  });
+  $('#dt-def').addEventListener('click', function () {
+    $('#dt-nam').value = '16:10'; $('#dt-trung').value = '17:10'; $('#dt-bac').value = '18:10';
+    msg('#dt-msg', 'Bấm "Lưu giờ quay" để áp dụng.');
   });
   $('#ro-def').addEventListener('click', function () { $('#ro-time').value = '14:00'; roNow(); msg('#ro-msg', 'Bấm "Lưu giờ chuyển" để áp dụng.'); });
 
