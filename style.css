@@ -637,3 +637,11 @@ body.prep-nam .tbl.nam .wait,body.prep-trung .tbl.trung .wait,body.prep-bac .tbl
 .ball.v.sp{background:#f0b400;color:#fff;border-color:#f0b400}
 .vl-jp{font:600 30px/1.3 var(--ui);color:#5b6068;text-align:center;padding-top:6px}
 .vl-jp b{color:#d70f28}
+/* v22: thỏi vàng to hơn, Vietlott viền cam, Thần Tài nền trắng chữ xanh lá */
+.rail .vang{width:120px;height:104px;margin:18px auto}
+.cd-top .vang{width:130px;height:112px}
+.ball.v{border-color:#ff7705!important}
+.ball.v.sp{background:#ff7705!important;border-color:#ff7705!important;color:#fff!important}
+.ball.t,.sbox .ball.t{background:#fff!important;color:#078701!important;border:6px solid #078701!important;
+  box-shadow:0 0 0 5px rgba(7,135,1,.14),inset 0 -6px 0 rgba(7,135,1,.10)}
+.ball.t .wait{border-color:#7cc47a}

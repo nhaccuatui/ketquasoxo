@@ -305,6 +305,18 @@ table.mt{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
         </div>
 
         <div class="box">
+          <h3 style="margin-top:0">Kiểm tra nguồn Minh Ngọc</h3>
+          <p class="hint">Bấm khi bảng không tự lấy được số: trang sẽ cho biết máy chủ nhận được gì từ Minh Ngọc. Bấm "Sao chép" rồi dán gửi cho người hỗ trợ.</p>
+          <div class="bar" style="margin-top:8px">
+            <label>Miền <select id="dbg-r"><option value="nam">Miền Nam</option><option value="trung">Miền Trung</option><option value="bac">Miền Bắc</option></select></label>
+            <button type="button" class="pri" id="dbg-go">Kiểm tra nguồn</button>
+            <button type="button" id="dbg-copy" hidden>Sao chép kết quả kiểm tra</button>
+            <span class="msg" id="dbg-msg" role="status"></span>
+          </div>
+          <div id="dbg-out" class="hint" style="margin-top:10px;white-space:pre-wrap;word-break:break-word"></div>
+        </div>
+
+        <div class="box">
           <h3 style="margin-top:0">Lần tự lấy gần nhất</h3>
           <div id="src-last" class="hint">--</div>
         </div>

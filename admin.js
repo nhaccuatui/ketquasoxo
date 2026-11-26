@@ -567,6 +567,28 @@
       .then(function () { $('#src-try').disabled = $('#src-apply').disabled = false; });
   }
   $('#src-try').addEventListener('click', function () { trySrc(true); });
+  var dbgText = '';
+  $('#dbg-go').addEventListener('click', function () {
+    var r = $('#dbg-r').value, date = $('#src-date').value || todayVN();
+    msg('#dbg-msg', 'Đang kiểm tra...'); $('#dbg-out').textContent = ''; $('#dbg-copy').hidden = true;
+    api('api/source', 'POST', { action: 'debug', region: r, date: date }).then(function (j) {
+      var d = j.out[r] || {};
+      var ok = d.classParser || d.tableParser;
+      msg('#dbg-msg', d.error ? 'Không kết nối được Minh Ngọc' : (ok ? 'Đọc được bảng số ✓' : 'Chưa đọc được bảng số'), !ok);
+      $('#dbg-out').innerHTML =
+        '<b>Địa chỉ:</b> ' + esc(d.url) + '<br>' +
+        '<b>Kết nối:</b> ' + (d.error ? '<b style="color:#d70f28">lỗi – ' + esc(d.error) + '</b>' : 'mã ' + esc(d.status) + ', ' + esc(d.bytes) + ' ký tự') + '<br>' +
+        '<b>Có ngày ' + esc(date.split('-').reverse().join('/')) + ' trong trang:</b> ' + (d.hasDate ? 'có' : '<b style="color:#d70f28">không</b>') + '<br>' +
+        '<b>Cách đọc 1:</b> ' + (d.classParser ? 'được ✓' : 'không') + ' · <b>Cách đọc 2:</b> ' + (d.tableParser ? 'được ✓' : 'không') + '<br>' +
+        '<b>Chữ gần ngày quay:</b><br>' + esc(d.textNearDate || '');
+      dbgText = JSON.stringify(j, null, 1); $('#dbg-copy').hidden = false;
+    }).catch(function (e) { msg('#dbg-msg', 'Lỗi: ' + e.message, true); });
+  });
+  $('#dbg-copy').addEventListener('click', function () {
+    function done(g) { msg('#dbg-msg', g ? 'Đã sao chép – dán (Ctrl + V) gửi cho người hỗ trợ.' : 'Không sao chép được, hãy chụp màn hình.', !g); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(dbgText).then(function () { done(true); }, function () { done(false); });
+    else done(false);
+  });
   $('#mn-live').addEventListener('click', function () {
     var box = $('#mn-box'), on = box.hidden;
     box.hidden = !on;

@@ -3,7 +3,7 @@
 // POST /api/source {action:"save", mode, fallback}                 -> lưu nguồn (minhngoc | xosovnm | off)
 // POST /api/source {action:"sync", date, mode?, dry?}              -> lấy kết quả 1 ngày ngay (dry = chỉ xem thử, không lưu)
 import { DATE_RE, K, fail, readBody, redis, requireAdmin, sendJson, vnToday } from './_lib.js';
-import { SOURCES, getSrc, syncDay } from './_sources.js';
+import { SOURCES, debugMinhNgoc, getSrc, syncDay } from './_sources.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { message: 'Chỉ nhận POST' });
@@ -18,6 +18,13 @@ export default async function handler(req, res) {
       // Không hiện dòng "Nguồn dữ liệu" ở trang chủ: xóa nếu bản cũ đã ghi
       try { const st = JSON.parse((await redis('GET', K.settings)) || '{}'); if (st.dataSource !== undefined) { delete st.dataSource; await redis('SET', K.settings, JSON.stringify(st)); } } catch { }
       return sendJson(res, 200, { ok: true, cfg, sources });
+    }
+    if (b.action === 'debug') {
+      const date = DATE_RE.test(String(b.date || '')) ? b.date : vnToday();
+      const regions = ['nam', 'trung', 'bac'].includes(b.region) ? [b.region] : ['nam', 'trung', 'bac'];
+      const out = {};
+      for (const r of regions) out[r] = await debugMinhNgoc(r, date);
+      return sendJson(res, 200, { date, out });
     }
     if (b.action === 'sync') {
       const date = DATE_RE.test(String(b.date || '')) ? b.date : vnToday();

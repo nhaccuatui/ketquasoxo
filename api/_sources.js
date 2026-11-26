@@ -107,6 +107,85 @@ function parseMinhNgoc(html, region, iso) {
   }
   return null;
 }
+// Cách đọc thứ 2 (không phụ thuộc tên class): đọc bảng theo hàng <tr> / ô <td>
+// Hàng tiêu đề có tên các đài, hàng "Giải tám", "Giải bảy"... mỗi ô là số của 1 đài theo đúng thứ tự cột.
+const PRIZE_LABEL = [[/đặc\s*biệt|\bĐB\b|giải\s*db/i, 'db'], [/giải\s*nhất|\bG\.?\s*1\b/i, 'g1'], [/giải\s*nhì|\bG\.?\s*2\b/i, 'g2'],
+  [/giải\s*ba\b|\bG\.?\s*3\b/i, 'g3'], [/giải\s*tư|\bG\.?\s*4\b/i, 'g4'], [/giải\s*năm|\bG\.?\s*5\b/i, 'g5'],
+  [/giải\s*sáu|\bG\.?\s*6\b/i, 'g6'], [/giải\s*bảy|\bG\.?\s*7\b/i, 'g7'], [/giải\s*tám|\bG\.?\s*8\b/i, 'g8']];
+function parseTableGeneric(html, region, iso) {
+  html = decode(html).normalize('NFC');
+  const len = LEN[region], ids = new Set(PRIZES[region].map((x) => x[0]));
+  const re = new RegExp(iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/(?:' + iso.slice(0, 4) + '|' + iso.slice(2, 4) + ')(?!\\d)', 'g');
+  const wd = new Date(iso + 'T00:00:00Z').getUTCDay();
+  const want = new Set(SCHEDULE[wd][region].map(slug));
+  let m;
+  while ((m = re.exec(html))) {
+    const win = html.slice(m.index, m.index + 60000);
+    const rows = win.split(/<tr[\s>]/i).slice(1).map((r) => r.split(/<\/tr>/i)[0]);
+    let cols = null, codes = [], provinces = null, got = 0;
+    for (const row of rows) {
+      const cells = row.split(/<t[dh][\s>]/i).slice(1).map((c) => c.split(/<\/t[dh]>/i)[0]);
+      if (cells.length < 2) continue;
+      const tx = cells.map(text);
+      if (region !== 'bac') {
+        const hit = tx.slice(1).filter((t) => want.has(slug(t))).length;
+        if (hit >= 1 && hit >= tx.length - 2) {           // hàng tên đài
+          if (provinces && got) break;                     // gặp bảng của ngày khác
+          cols = tx.slice(1).map((t) => t.trim());
+          provinces = cols.map((n) => ({ name: n, code: '', prizes: {} }));
+          continue;
+        }
+        if (provinces && tx.slice(1).every((t) => /^L\s*:|^(Mã|Ký hiệu)/i.test(t) || !t)) {
+          tx.slice(1).forEach((t, i) => { if (provinces[i]) provinces[i].code = t.replace(/^.*?:\s*/, ''); });
+          continue;
+        }
+      }
+      const lab = PRIZE_LABEL.find(([r]) => r.test(tx[0]));
+      if (!lab || !ids.has(lab[1])) continue;
+      if (region === 'bac') {
+        provinces = provinces || [{ name: '', code: '', prizes: {} }];
+        if (provinces[0].prizes[lab[1]]) break;           // đã sang bảng ngày khác
+        provinces[0].prizes[lab[1]] = nums(cells.slice(1).join(' '), len[lab[1]]);
+        got++;
+      } else if (provinces) {
+        if (provinces[0].prizes[lab[1]]) break;
+        cells.slice(1).forEach((c, i) => { if (provinces[i]) provinces[i].prizes[lab[1]] = nums(c, len[lab[1]]); });
+        got++;
+      }
+    }
+    if (provinces && got) {
+      if (region === 'bac') {
+        const kh = /\b(\d{1,2}[A-Z]{1,3}(?:\s*-\s*\d{1,2}[A-Z]{1,3}){2,7})\b/.exec(text(win.slice(0, 15000)));
+        return { provinces, kyhieu: kh ? kh[1].split(/\s*-\s*/) : [] };
+      }
+      return { provinces: provinces.filter((p) => want.has(slug(p.name))) };
+    }
+  }
+  return null;
+}
+// Chẩn đoán: máy chủ nhận được gì từ Minh Ngọc (để sửa nhanh khi đọc không được)
+export async function debugMinhNgoc(region, iso) {
+  const url = iso === vnToday() ? 'https://www.minhngoc.net.vn/xo-so-truc-tiep/' + MN_SLUG[region] + '.html'
+    : 'https://www.minhngoc.net.vn/ket-qua-xo-so/' + MN_SLUG[region] + '/' + iso.slice(8, 10) + '-' + iso.slice(5, 7) + '-' + iso.slice(0, 4) + '.html';
+  const out = { url };
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'text/html', 'Accept-Language': 'vi-VN,vi;q=0.9' }, cache: 'no-store' });
+    out.status = r.status;
+    const html = await r.text();
+    out.bytes = html.length;
+    const dec = decode(html);
+    const d1 = dmy(iso), d2 = d1.slice(0, 6) + d1.slice(8);
+    const at = dec.indexOf(d1) >= 0 ? dec.indexOf(d1) : dec.indexOf(d2);
+    out.hasDate = at >= 0;
+    out.markers = {};
+    ['rightcl', 'giai8', 'giaidb', 'tinh', 'matinh', 'bkqmiennam', 'bkqmienbac', 'Giải tám', 'Đặc biệt'].forEach((k) => { out.markers[k] = (dec.match(new RegExp(k, 'gi')) || []).length; });
+    out.classParser = !!parseMinhNgoc(html, region, iso);
+    out.tableParser = !!parseTableGeneric(html, region, iso);
+    out.textNearDate = at >= 0 ? text(dec.slice(at, at + 3000)).slice(0, 700) : text(dec).slice(0, 400);
+    out.htmlNearDate = at >= 0 ? dec.slice(at, at + 2500) : dec.slice(0, 1500);
+  } catch (e) { out.error = e.message; }
+  return out;
+}
 const filledOf = (r) => (r && r.provinces || []).reduce((s, p) => s + Object.values(p.prizes || {}).reduce((t, a) => t + a.length, 0), 0);
 /* ---- Điện toán 1*2*3, 6x36, Thần Tài 4, Vietlott Mega 6/45 & Power 6/55 (nằm cùng trang Miền Bắc của Minh Ngọc) ---- */
 // Lấy đoạn chữ ngay sau nhãn (vd "Kết quả xổ số Thần Tài 4"), cắt ở nhãn "Kết quả xổ số" kế tiếp
@@ -168,7 +247,9 @@ async function minhngoc(region, iso) {
     let html;
     try { html = await get(u); } catch (e) { lastErr = e; continue; }
     sawPage = true;
-    const r = parseMinhNgoc(html, region, iso);
+    let r = parseMinhNgoc(html, region, iso);
+    const r2 = parseTableGeneric(html, region, iso);
+    if (r2 && filledOf(r2) > filledOf(r)) r = r2;
     if (region === 'bac') extras = Object.assign(parseExtras(html, iso), extras);
     if (r && filledOf(r) > filledOf(best)) best = r;
     if (best && filledOf(best) >= PRIZES[region].reduce((s, x) => s + x[1], 0) * best.provinces.length) break; // đã đủ số
